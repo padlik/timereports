@@ -2,7 +2,7 @@
 import calendar as cal
 
 
-class SugarQueryBuilder(object):
+class GDQueryBuilder(object):
     _n_weeks = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
     _HEAD = """ select users.sugar_uname AS username,"""
     _BODY = """ sum((case
@@ -42,7 +42,7 @@ class SugarQueryBuilder(object):
             return "%s-%s-%s" % (self._year, self._month, day)
 
         s_cal = make_calendar(self._year, self._month)
-        s_sql = SugarQueryBuilder._HEAD
+        s_sql = GDQueryBuilder._HEAD
         for n, dayt in enumerate(s_cal):
             s_sql += self._BODY % (f_date(dayt[0]), f_date(dayt[1]), self._n_weeks[n])
         s_sql += self._FOOT % (f_date(s_cal[0][0]), f_date(s_cal[-1][-1]))
@@ -70,7 +70,7 @@ class SugarQueryBuilder(object):
 
 
 if __name__ == '__main__':
-    report = SugarQueryBuilder()
+    report = GDQueryBuilder()
     # print report.cursor
     report.year = 2014
     report.month = 3

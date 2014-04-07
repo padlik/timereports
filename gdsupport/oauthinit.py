@@ -47,8 +47,3 @@ if __name__ == '__main__':
     data = [(k, v) for k, v in params.iteritems()]
     cred = cred + (data, )
     set_oauth_params(*cred)
-
-
-
-
-
