@@ -32,7 +32,7 @@ class GSpreadsheetHelper(object):
 
     def get_range(self, srange):
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
-        cells = self.client.GetCells(self.sheet_id, 'od6', q=query)
+        cells = self.client.GetCells(self.sheet_id, self._s_magic, q=query)
         n_of_cols = int(cells.entry[-1].cell.col)
         rows = 0
         matrix = []
@@ -46,9 +46,9 @@ class GSpreadsheetHelper(object):
 
     def set_range(self, srange, matrix, clear_out=False, immediate=True):
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
-        cells = self.client.GetCells(self.sheet_id, 'od6', q=query)
+        cells = self.client.GetCells(self.sheet_id, self._s_magic, q=query)
         obj_data = gdata.spreadsheets.data
-        batch = obj_data.BuildBatchCellsUpdate(self.sheet_id, 'od6')
+        batch = obj_data.BuildBatchCellsUpdate(self.sheet_id, self._s_magic)
         for cell in cells.entry:
             try:
                 cell.cell.input_value = matrix[int(cell.cell.row) - 1][int(cell.cell.col) - 1]
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     s_sql = 'select param, value from oauthdata'
     c = db.cursor()
     c.execute(s_sql)
-    params = dict([(p, v) for p, v in c.fetchall()])
+    params = {p: v for p, v in c.fetchall()}
 
     st = '0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E'
     sheet = GSpreadsheetHelper(st, params)

@@ -23,7 +23,7 @@ def get_oauth_params(user, password, db, host):
     db = MySQLdb.connect(user=user, passwd=password, db=db, host=host, charset='utf8')
     c = db.cursor()
     c.execute('select param, value from time_reports.oauthdata')
-    params = dict([(p, v) for p, v in c.fetchall()])
+    params = {p: v for p, v in c.fetchall()}
     db.close()
     return params
 
