@@ -1,6 +1,4 @@
 #!/bin/env python
-
-#run  get refresh and access tokens for google oauth2 and load them into db
 import gdata.gauth
 
 from injectors import SQLDb
