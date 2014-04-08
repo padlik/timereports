@@ -1,11 +1,33 @@
 #!/bin/env python
 
 #run  get refresh and access tokens for google oauth2 and load them into db
-import MySQLdb
 import gdata.gauth
+
+from injectors import SQLDb
+import inject
+from paramsparser import BasicParamsParser
 
 
 SCOPE = 'https://spreadsheets.google.com/feeds/'
+
+CONFIG = {
+    "host": (
+        ('-h', '--host'),
+        {'required': True, 'help': "DB host"}
+    ),
+    "user": (
+        ('-u', '--user'),
+        {'required': True, 'help': "DB user"}
+    ),
+    "password": (
+        ('-p', '--password'),
+        {'required': True, 'help': "DB password"}
+    ),
+    "db": (
+        ('-d', '--db'),
+        {'required': True, 'help': "schema name"}
+    )
+}
 
 
 def refresh_tokens(params):
@@ -19,8 +41,8 @@ def refresh_tokens(params):
     return params
 
 
-def get_oauth_params(user, password, db, host):
-    db = MySQLdb.connect(user=user, passwd=password, db=db, host=host, charset='utf8')
+def get_oauth_params():
+    db = inject.instance(SQLDb)
     c = db.cursor()
     c.execute('select param, value from time_reports.oauthdata')
     params = {p: v for p, v in c.fetchall()}
@@ -28,8 +50,8 @@ def get_oauth_params(user, password, db, host):
     return params
 
 
-def set_oauth_params(user, password, db, host, data):
-    db = MySQLdb.connect(user=user, passwd=password, db=db, host=host, charset='utf8')
+def set_oauth_params(data):
+    db = inject.instance(SQLDb)
     c = db.cursor()
     s_qry = """insert into time_reports.oauthdata(param, value) values (%s, %s)
                ON DUPLICATE KEY UPDATE value = values(value)"""
@@ -40,10 +62,24 @@ def set_oauth_params(user, password, db, host, data):
 
 
 if __name__ == '__main__':
-    cred = ('root', 'pass', 'time_reports', 'localhost')
-    params = get_oauth_params(*cred)
+    import sys
+    import MySQLdb
+
+    cmd_params = sys.argv[1:]
+    config = BasicParamsParser(caption=sys.argv[0], config=CONFIG, need_help=False)
+    config.parse(cmd_params)
+    mysql_conf = {'user': config['user'],
+                  'passwd': config['password'],
+                  'db': config['db'],
+                  'host': config['host'],
+                  'charset': 'utf8'}
+    sqldb = MySQLdb.connect(**mysql_conf)
+
+    def my_config(binder):
+        binder.bind(SQLDb, sqldb)
+
+    params = get_oauth_params()
     params = refresh_tokens(params)
     print params
     data = [(k, v) for k, v in params.iteritems()]
-    cred = cred + (data, )
-    set_oauth_params(*cred)
+    set_oauth_params(*data)
