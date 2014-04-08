@@ -6,12 +6,45 @@ import gdata.spreadsheets.data
 import gdata.gauth
 
 
-class GSpreadsheetHelper(object):
-    _s_magic = 'od6'  # first sheet magic name in Google
-    _scope = 'https://spreadsheets.google.com/feeds/'
-    _ua = 'sugarreport.app'
+def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
+    """Converts an integer to a base36 string."""
+    if not isinstance(number, (int, long)):
+        raise TypeError('number must be an integer')
 
-    def __init__(self, sheet_id, oauth2params):
+    base36 = ''
+    sign = ''
+
+    if number < 0:
+        sign = '-'
+        number = -number
+
+    if 0 <= number < len(alphabet):
+        return sign + alphabet[number]
+
+    while number != 0:
+        number, i = divmod(number, len(alphabet))
+        base36 = alphabet[i] + base36
+
+    return sign + base36
+
+
+def id2gid(worksheet_id):
+    return int(worksheet_id, 36) ^ 31578
+
+
+def gid2id(worksheet_id):
+    return base36encode(int(worksheet_id ^ 31578))
+
+
+__APP__ = 'sugarreport.app'
+__SCOPE__ = 'https://spreadsheets.google.com/feeds/'
+
+
+class GSpreadsheetHelper(object):
+    _scope = __SCOPE__
+    _ua = __APP__
+
+    def __init__(self, sheet_id, oauth2params, worksheet=0):
         self.token = gdata.gauth.OAuth2Token(client_id=oauth2params['client_id'],
                                              client_secret=oauth2params['client_sec'],
                                              scope=self._scope, user_agent=self._ua,
@@ -20,6 +53,8 @@ class GSpreadsheetHelper(object):
         self.client = gdata.spreadsheets.client.SpreadsheetsClient()
         self.token.authorize(self.client)
         self.sheet_id = sheet_id
+        self._s_magic = gid2id(worksheet).lower()
+        self.w_entry = self.client.GetWorksheet(self.sheet_id, self._s_magic)
 
     def update_cell(self, row, col, value, immediate=True):
         cell = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
@@ -59,6 +94,32 @@ class GSpreadsheetHelper(object):
 
         self.client.batch(batch, force=immediate)
 
+    @property
+    def dimension(self):
+        return int(self.w_entry.col_count.text), int(self.w_entry.row_count.text)
+
+    @dimension.setter
+    def dimension(self, dim):
+        self.w_entry.col_count.text = str(dim[0])
+        self.w_entry.row_count.text = str(dim[1])
+        self.client.update(self.w_entry)
+
+    @property
+    def cols(self):
+        return self.dimension[0]
+
+    @property
+    def rows(self):
+        return self.dimension[1]
+
+    @property
+    def sheet(self):
+        return id2gid(self._s_magic)
+
+    @sheet.setter
+    def sheet(self, sheet):
+        self._s_magic = gid2id(sheet).lower()
+
 
 if __name__ == '__main__':
     db = MySQLdb.connect(user='root', passwd='pass', db='time_reports', host='localhost', charset='utf8')
@@ -69,19 +130,23 @@ if __name__ == '__main__':
 
     st = '0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E'
     sheet = GSpreadsheetHelper(st, params)
+    print sheet.dimension
+    sheet.dimension = (10, 50)
+    print sheet.sheet
+    print sheet.dimension
     print sheet.get_cell(1, 9)
     r = sheet.get_range("A1:I3")
     print r
-    r[0][1] = '160'
-    r[1][1] = '160'
-    r[2][1] = 'username!'
-    sheet.set_range("A1:I3", r)
-    r = sheet.get_range("A1:I3")
+    # r[0][1] = '160'
+    # r[1][1] = '160'
+    # r[2][1] = 'username!'
+    # sheet.set_range("A1:M3", r)
+    r = sheet.get_range("A1:M3")
     print r
-    sheet.set_range("A1:I3", [], clear_out=True)
-    print sheet.get_range("A1:I3")
-    sheet.set_range("A1:I3", r)
-    print sheet.get_range("A1:I3")
+    sheet.set_range("A1:M3", [], clear_out=True)
+    print sheet.get_range("A1:M3")
+    sheet.set_range("A1:M3", r)
+    print sheet.get_range("A1:M3")
 
 
 

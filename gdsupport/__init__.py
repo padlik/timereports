@@ -1,4 +1,4 @@
 __author__ = 'paul'
-import oauthinit
+import oauthhelper
 import gdspreadsheet
 import gdsqlbuilder
