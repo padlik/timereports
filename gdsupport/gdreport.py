@@ -16,7 +16,7 @@ class GDReportError(Exception):
 
 
 class ReportTemplateParser(object):
-    
+
     def __init__(self):
         self._template = {}
 
