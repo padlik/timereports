@@ -6,6 +6,10 @@ import gdata.spreadsheets.data
 import gdata.gauth
 
 
+class GSpreadSheetError(Exception):
+    pass
+
+
 def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
     """Converts an integer to a base36 string."""
     if not isinstance(number, (int, long)):
@@ -36,11 +40,38 @@ def gid2id(worksheet_id):
     return base36encode(int(worksheet_id ^ 31578))
 
 
+__ALFA__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+
+def abc2col(abc_col):
+    """
+      Converts AA columns style addressing to column number as per Google Sheet
+    """
+    idx = __ALFA__
+    col = 0
+    mul = 0
+    for s in abc_col:
+        col = idx.index(s) + col * mul + 1
+        mul += len(idx)
+    return col
+
+
+def col2abc(col):
+    """
+      reverts the one done by abc2col
+    """
+    if not type(col) == int:
+        raise GSpreadSheetError('Column number must be int')
+    if col < 1:
+        raise GSpreadSheetError('Column number shold start from 1 ')
+    return __ALFA__[col / len(__ALFA__) - 1] + __ALFA__[col % len(__ALFA__) - 1]
+
+
 __APP__ = 'sugarreport.app'
 __SCOPE__ = 'https://spreadsheets.google.com/feeds/'
 
 
-class GSpreadsheetHelper(object):
+class GSpreadSheet(object):
     _scope = __SCOPE__
     _ua = __APP__
 
@@ -129,7 +160,7 @@ if __name__ == '__main__':
     params = {p: v for p, v in c.fetchall()}
 
     st = '0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E'
-    sheet = GSpreadsheetHelper(st, params)
+    sheet = GSpreadSheet(st, params)
     print sheet.dimension
     sheet.dimension = (10, 50)
     print sheet.sheet
