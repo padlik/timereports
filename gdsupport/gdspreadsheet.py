@@ -40,32 +40,6 @@ def gid2id(worksheet_id):
     return base36encode(int(worksheet_id ^ 31578))
 
 
-__ALFA__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-
-def abc2col(abc_col):
-    """
-      Converts AA columns style addressing to column number as per Google Sheet
-    """
-    idx = __ALFA__
-    col = 0
-    mul = 0
-    for s in abc_col:
-        col = idx.index(s) + col * mul + 1
-        mul += len(idx)
-    return col
-
-
-def col2abc(col):
-    """
-      reverts the one done by abc2col
-    """
-    if not type(col) == int:
-        raise GSpreadSheetError('Column number must be int')
-    if col < 1:
-        raise GSpreadSheetError('Column number shold start from 1 ')
-    return __ALFA__[col / len(__ALFA__) - 1] + __ALFA__[col % len(__ALFA__) - 1]
-
 
 __APP__ = 'sugarreport.app'
 __SCOPE__ = 'https://spreadsheets.google.com/feeds/'
@@ -87,7 +61,7 @@ class GSpreadSheet(object):
         self._s_magic = gid2id(worksheet).lower()
         self.w_entry = self.client.GetWorksheet(self.sheet_id, self._s_magic)
 
-    def update_cell(self, row, col, value, immediate=True):
+    def set_cell(self, row, col, value, immediate=True):
         cell = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
         cell.cell.input_value = str(value)
         self.client.update(cell, force=immediate)
@@ -122,7 +96,6 @@ class GSpreadSheet(object):
                 if clear_out:
                     cell.cell.input_value = ''
             batch.add_batch_entry(cell, cell.id.text, batch_id_string=cell.title.text, operation_string='update')
-
         self.client.batch(batch, force=immediate)
 
     @property
