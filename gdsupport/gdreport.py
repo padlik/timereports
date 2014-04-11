@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import re
+import collections
 
 TEMPLATE = {
     'minsk_target': {'type': 'cell', 'range': 'B1'},
@@ -19,7 +20,7 @@ class GDReportError(Exception):
 
 def abc2col(abc_col):
     """
-      Converts AA columns style addressing to column number as per Google Sheet
+      Converts AA columns style addressing to column number
     """
     idx = __ALFA__
     col = 0
@@ -44,7 +45,8 @@ def col2abc(num_col):
         return __ALFA__[num_col / len(__ALFA__) - 1] + __ALFA__[num_col % len(__ALFA__) - 1]
 
 
-class ReportTemplate(object):
+#TODO: Rewrite in abcmeta
+class ReportTemplate(collections.MutableMapping):
     _REG_ = re.compile('^([a-zA-Z]+)([1-9]+)', re.IGNORECASE)
 
     class Cell(object):
@@ -112,6 +114,7 @@ class ReportTemplate(object):
     def __init__(self, template=None):
         self._template = template or {}
         self._report = {}
+        self._generators = {'cell': self._generate_cell, 'range': self._generate_range}
 
     @staticmethod
     def __validate_type(item_type):
@@ -141,11 +144,8 @@ class ReportTemplate(object):
 
     def _parse_template(self):
         for name, value in self._template.iteritems():
-            rtype = self.__validate_type(value.get('type'))
-            if rtype == 'cell':
-                self._report[name] = self._generate_cell(name, **value)
-            else:
-                self._report[name] = self._generate_range(name, **value)
+            self._report[name] = self._generators[self.__validate_type(value.get('type'))](name, **value)
+
 
     @property
     def template(self):
@@ -156,9 +156,104 @@ class ReportTemplate(object):
         self._template = template
         self._parse_template()
 
+    def __getitem__(self, item):
+        return self._report[item]
+
+    def __iter__(self):
+        for key in self._report.keys():
+            yield key
+
+    def __len__(self):
+        return len(self._report)
+
+    def __setitem__(self, key, value):
+        raise GDReportError('Not supported')
+
+    def __delitem__(self, key):
+        raise GDReportError('Not supported')
+
+
+class SpreadsheetProvider(object):
+    def set_cell(self, cell_range, value):
+        pass
+
+    def set_range(self, xlrange, value):
+        pass
+
+
+class DataProvider(object):
+    def get_value(self, key):
+        """
+         Simple value for cell
+        :rtype : string
+        """
+        pass
+
+    def get_range_value(self, key):
+        """
+         list of lists for ROWS in a range
+         :rtype : iterable
+        """
+        pass
+
+
+class ReportBuilder(object):
+    def __init__(self, dataprovider=None, spreadsheet=None, template=None):
+        self._dp = dataprovider
+        self._ss = spreadsheet
+        self._tt = template
+
+    def execute(self):
+        for name, value in self._tt.iteritems():
+            if isinstance(value, ReportTemplate.Cell):
+                self._process_cell(value)
+            else:
+                self._process_range(value)
+
+    def _process_cell(self, cell):
+        self._ss.set_cell(cell.range, self._dp.get_value(cell.name))
+
+    def _process_range(self, range):
+        if range.dynamic:
+            r = range
+            for v in self._dp.get_range_value(range.name):
+                self._ss.set_range(r.range, v)
+                r = r.next()
+        else:
+            self._ss.set_range(range.range, self._dp.get_range_value(range.name))
+
+    @property
+    def spreadsheet(self):
+        return self._ss
+
+    @spreadsheet.setter
+    def spreadsheet(self, spreadsheet):
+        self._ss = spreadsheet
+
+    @property
+    def datasource(self):
+        return self._dp
+
+    @datasource.setter
+    def datasource(self, datasource):
+        self._dp = datasource
+
+    @property
+    def template(self):
+        return self._tt
+
+    @template.setter
+    def template(self, template):
+        self._tt = template
+
 
 if __name__ == '__main__':
     report = ReportTemplate()
+    builder = ReportBuilder()
+    data = DataProvider()
+    sheet = SpreadsheetProvider()
     report.template = TEMPLATE
-    print report._report['hour_report'].__dict__
-    print report._report['hour_report'].next().range
+    builder.template = report
+    builder.datasource = data
+    builder.spreadsheet = sheet
+    builder.execute()
