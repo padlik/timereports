@@ -62,13 +62,13 @@ class GSpreadSheet(object):
         self.w_entry = self.client.GetWorksheet(self.sheet_id, self._s_magic)
 
     def set_cell(self, row, col, value, immediate=True):
-        cell = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
-        cell.cell.input_value = str(value)
-        self.client.update(cell, force=immediate)
+        item = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
+        item.cell.input_value = str(value)
+        self.client.update(item, force=immediate)
 
     def get_cell(self, row, col):
-        cell = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
-        return cell.cell.input_value
+        item = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
+        return item.cell.input_value
 
     def get_range(self, srange):
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
@@ -89,13 +89,13 @@ class GSpreadSheet(object):
         cells = self.client.GetCells(self.sheet_id, self._s_magic, q=query)
         obj_data = gdata.spreadsheets.data
         batch = obj_data.BuildBatchCellsUpdate(self.sheet_id, self._s_magic)
-        for cell in cells.entry:
+        for item in cells.entry:
             try:
-                cell.cell.input_value = matrix[int(cell.cell.row) - 1][int(cell.cell.col) - 1]
+                item.cell.input_value = matrix[int(item.cell.row) - 1][int(item.cell.col) - 1]
             except IndexError:
                 if clear_out:
-                    cell.cell.input_value = ''
-            batch.add_batch_entry(cell, cell.id.text, batch_id_string=cell.title.text, operation_string='update')
+                    item.cell.input_value = ''
+            batch.add_batch_entry(item, item.id.text, batch_id_string=item.title.text, operation_string='update')
         self.client.batch(batch, force=immediate)
 
     @property
