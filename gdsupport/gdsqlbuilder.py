@@ -9,6 +9,7 @@ class GDQueryBuilder(object):
                 when (timesheets.activity_date between '%s' and '%s') then timesheets.time_spent
                 else 0
                 end)) AS %s_week, """
+    _DUMMY = """0 as %s_week, """
     _FOOT = """ sum((case
                 when
                 ((timesheets.activity_date between '%s' and '%s')
@@ -45,6 +46,9 @@ class GDQueryBuilder(object):
         s_sql = GDQueryBuilder._HEAD
         for n, dayt in enumerate(s_cal):
             s_sql += self._BODY % (f_date(dayt[0]), f_date(dayt[1]), self._n_weeks[n])
+        #hack to provide 6th week in case if it is not present
+        if len(s_cal) < 6:
+            s_sql += self._DUMMY % self._n_weeks[n + 1]
         s_sql += self._FOOT % (f_date(s_cal[0][0]), f_date(s_cal[-1][-1]))
         return s_sql
 
@@ -73,5 +77,5 @@ if __name__ == '__main__':
     report = GDQueryBuilder()
     # print report.cursor
     report.year = 2014
-    report.month = 3
+    report.month = 4
     print report.query

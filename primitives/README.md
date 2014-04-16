@@ -7,7 +7,7 @@ Simple pseudo-language to build up chained constructions like:
 
 do().something().in_().some().chain()
 
-Grammar consists of *states* and *aliases*. Each state can be associated with one or more alias
+Grammar consists of *states* and *aliases*. Each state can be associated with one or more aliases
 Example of simple pseudo-sql grammar:
 `__GRAMMAR = {'INIT': ['INIT', 'SELECT', 'TERM'],
              'SELECT': ['FROM'],
@@ -17,8 +17,8 @@ Example of simple pseudo-sql grammar:
              'NON_TERM': ['OP'],
              'TERM': []}`
 Means, that *INIT* can be followed by *SELECT* that can be followed by *FROM* that can be followed by either
-*WHERE* or *TERM* and so on. *TERM* is final state as it does not provide any further states
-Aliases from the other side means real class methods representing states
+*WHERE* or *TERM* and so on. *TERM* is the final state as it does not provide any further states
+Aliases from the other side mean real class methods representing states
 `__ALIASES = {'INIT': [],
                  'SELECT': ['select_'],
                  'FROM': ['from_'],
@@ -26,10 +26,10 @@ Aliases from the other side means real class methods representing states
                  'OP': ['in_', 'gt_', 'lt_', 'eq_', 'neq_', 'bw_'],
                  'NON_TERM': ['and_', 'or_'],
                  'TERM': ['exec_', 'end_']}`
-In this case *select_* method will represent *SELECT* state, when *OP* state is represented with many methods (aka SQL
+In this case *select_* method will represent *SELECT* state, when *OP* state is represented by many methods (aka SQL
 IN, >, < , =, !=, BETWEEN
 
-There are also helper clasess to help dialing with interpreter. For example let's created grammar the above and parse
+There are also helper clasess for  dialing with interpreter. For example let's create the grammar above and parse
 some simple statements.
 
 Creating primitive listener that will just print statements and environment:
@@ -82,7 +82,7 @@ Chains can be combined together so more than one statement can be executed at th
 
 observer.py
 --------------------
-Simple decorator-based observer implementation. Can be applied to any object need to be observed and tracked. There are
+Simple decorator-based observer implementation. Can be applied to any object that needs to be observed and tracked. There are
 some difficulties with standard methods like *__get_item__*.
 Example:
 Let's assume we have simple class to observe:
@@ -133,11 +133,11 @@ So subscribers can subscribe:
     disp.subscribe(o2, c, 'test2')
     disp.subscribe(o, c, 'test2')
 
-Some information about subscribers to a particular method:
+Some information about subscribers to the particular method:
 
     disp.get_subscribers(c, 'test2')
 
-Execution of *test1* or *test2* methods will automatically call appropriate subscriber method
+Execution of *test1* or *test2* methods will automatically call appropriate subscribers' method
     c.test1(value=False)
     c.test2()
 
@@ -148,7 +148,7 @@ We can also cancel subscription:
     c.test1(value=False)
     c.test2()
 
-Exception will raise when we are trying to subscribe on non-registered event
+Exception will raise when subscribing to a non-registered event
 
     try:
         for s in disp.get_subscribers(c, 'test2'):
