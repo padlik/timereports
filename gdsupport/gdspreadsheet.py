@@ -4,6 +4,9 @@ import MySQLdb
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data
 import gdata.gauth
+from xlutils import range_dimension
+
+
 
 
 class GSpreadSheetError(Exception):
@@ -49,30 +52,31 @@ class GSpreadSheet(object):
     _scope = __SCOPE__
     _ua = __APP__
 
-    def __init__(self, sheet_id, oauth2params, worksheet=0):
-        self.token = gdata.gauth.OAuth2Token(client_id=oauth2params['client_id'],
+    def __init__(self, worksheet_id, oauth2params, sheet=0):
+        self._token = gdata.gauth.OAuth2Token(client_id=oauth2params['client_id'],
                                              client_secret=oauth2params['client_sec'],
                                              scope=self._scope, user_agent=self._ua,
                                              access_token=oauth2params['client_at'],
                                              refresh_token=oauth2params['client_rt'])
-        self.client = gdata.spreadsheets.client.SpreadsheetsClient()
-        self.token.authorize(self.client)
-        self.sheet_id = sheet_id
-        self._s_magic = gid2id(worksheet).lower()
-        self.w_entry = self.client.GetWorksheet(self.sheet_id, self._s_magic)
+        self._client = gdata.spreadsheets.client.SpreadsheetsClient()
+        self._token.authorize(self._client)
+        self._worksheet_id = worksheet_id
+        self._s_magic = gid2id(sheet).lower()
+        self._w_entry = self._client.GetWorksheet(self._worksheet_id, self._s_magic)
 
     def set_cell(self, row, col, value, immediate=True):
-        item = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
+        item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
         item.cell.input_value = str(value)
-        self.client.update(item, force=immediate)
+        self._client.update(item, force=immediate)
 
     def get_cell(self, row, col):
-        item = self.client.get_cell(self.sheet_id, self._s_magic, row, col)
+        item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
         return item.cell.input_value
+
 
     def get_range(self, srange):
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
-        cells = self.client.GetCells(self.sheet_id, self._s_magic, q=query)
+        cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         n_of_cols = int(cells.entry[-1].cell.col)
         rows = 0
         matrix = []
@@ -86,27 +90,31 @@ class GSpreadSheet(object):
 
     def set_range(self, srange, matrix, clear_out=False, immediate=True):
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
-        cells = self.client.GetCells(self.sheet_id, self._s_magic, q=query)
+        cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         obj_data = gdata.spreadsheets.data
-        batch = obj_data.BuildBatchCellsUpdate(self.sheet_id, self._s_magic)
-        for item in cells.entry:
+        batch = obj_data.BuildBatchCellsUpdate(self._worksheet_id, self._s_magic)
+        dim = range_dimension(srange)
+
+        items = iter(cells.entry)
+        for col, row in ((c, r) for c in xrange(dim[0]) for r in xrange(dim[1])):
+            item = items.next()
             try:
-                item.cell.input_value = matrix[int(item.cell.row) - 1][int(item.cell.col) - 1]
+                item.cell.input_value = matrix[row][col]
             except IndexError:
                 if clear_out:
                     item.cell.input_value = ''
             batch.add_batch_entry(item, item.id.text, batch_id_string=item.title.text, operation_string='update')
-        self.client.batch(batch, force=immediate)
+        self._client.batch(batch, force=immediate)
 
     @property
     def dimension(self):
-        return int(self.w_entry.col_count.text), int(self.w_entry.row_count.text)
+        return int(self._w_entry.col_count.text), int(self._w_entry.row_count.text)
 
     @dimension.setter
     def dimension(self, dim):
-        self.w_entry.col_count.text = str(dim[0])
-        self.w_entry.row_count.text = str(dim[1])
-        self.client.update(self.w_entry)
+        self._w_entry.col_count.text = str(dim[0])
+        self._w_entry.row_count.text = str(dim[1])
+        self._client.update(self._w_entry)
 
     @property
     def cols(self):
@@ -139,18 +147,18 @@ if __name__ == '__main__':
     print sheet.sheet
     print sheet.dimension
     print sheet.get_cell(1, 9)
-    r = sheet.get_range("A1:I3")
+    r = sheet.get_range("A1")
     print r
     # r[0][1] = '160'
     # r[1][1] = '160'
     # r[2][1] = 'username!'
     # sheet.set_range("A1:M3", r)
-    r = sheet.get_range("A1:M3")
+    r = sheet.get_range("A4:I4")
     print r
-    sheet.set_range("A1:M3", [], clear_out=True)
-    print sheet.get_range("A1:M3")
-    sheet.set_range("A1:M3", r)
-    print sheet.get_range("A1:M3")
+    # sheet.set_range("A1:M3", [], clear_out=True)
+    # print sheet.get_range("A1:M3")
+    # sheet.set_range("A1:M3", r)
+    # print sheet.get_range("A1:M3")
 
 
 

@@ -2,52 +2,24 @@
 
 import re
 import collections
+from xlutils import abc2col
+from xlutils import col2abc
+from xlutils import cell2tuple
+import xlutils
 
 TEMPLATE = {
-    'minsk_target': {'type': 'cell', 'range': 'B1'},
-    'ua_target': {'type': 'cell', 'range': 'B2'},
     'update_date': {'type': 'cell', 'range': 'H1'},
     'update_time': {'type': 'cell', 'range': 'H2'},
     'hour_report': {'type': 'range', 'range': 'A4:H4', 'dynamic': 'rows'}
 }
-
-__ALFA__ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
 class GDReportError(Exception):
     pass
 
 
-def abc2col(abc_col):
-    """
-      Converts AA columns style addressing to column number
-    """
-    idx = __ALFA__
-    col = 0
-    mul = 0
-    for s in abc_col:
-        col = idx.index(s) + col * mul + 1
-        mul += len(idx)
-    return col
 
-
-def col2abc(num_col):
-    """
-      reverts the one done by abc2col
-    """
-    if not type(num_col) == int:
-        raise GDReportError('Column number must be int')
-    if num_col < 1:
-        raise GDReportError('Column number should start from 1 ')
-    if num_col < len(__ALFA__):
-        return __ALFA__[num_col - 1]
-    else:
-        return __ALFA__[num_col / len(__ALFA__) - 1] + __ALFA__[num_col % len(__ALFA__) - 1]
-
-
-#TODO: Rewrite in abcmeta
 class ReportTemplate(collections.MutableMapping):
-    _REG_ = re.compile('^([a-zA-Z]+)([1-9]+)', re.IGNORECASE)
 
     class Cell(object):
         def __init__(self, key, cell_range):
@@ -77,13 +49,13 @@ class ReportTemplate(collections.MutableMapping):
         def _next_col(crange):
             sr = crange.split(":")
             if len(sr) == 1:
-                m = ReportTemplate._REG_.match(sr)
-                result = col2abc(abc2col(m.groups()[0]) + 1) + m.groups()[1]
+                m = cell2tuple(crange)
+                result = col2abc(abc2col(m[0]) + 1) + m[1]
             else:
-                hm = ReportTemplate._REG_.match(sr[0])
-                tm = ReportTemplate._REG_.match(sr[1])
-                head = col2abc(abc2col(tm.groups()[0]) + 1) + hm.groups()[1]
-                tail = col2abc(2 * abc2col(tm.groups()[0]) - abc2col(hm.groups()[0]) + 1) + tm.groups()[1]
+                hm = cell2tuple(sr[0])
+                tm = cell2tuple(sr[1])
+                head = col2abc(abc2col(tm[0]) + 1) + hm[1]
+                tail = col2abc(2 * abc2col(tm[0]) - abc2col(hm[0]) + 1) + tm[1]
                 result = ":".join([head, tail])
             return result
 
@@ -91,13 +63,13 @@ class ReportTemplate(collections.MutableMapping):
         def _next_row(rrange):
             sr = rrange.split(":")
             if len(sr) == 1:
-                m = ReportTemplate._REG_.match(sr)
-                result = m.groups()[0] + str(int(m.groups()[1]) + 1)
+                m = cell2tuple(sr)
+                result = m[0] + str(int(m[1]) + 1)
             else:
-                hm = ReportTemplate._REG_.match(sr[0])
-                tm = ReportTemplate._REG_.match(sr[1])
-                head = hm.groups()[0] + str(int(tm.groups()[1]) + 1)
-                tail = tm.groups()[0] + str(2 * int(tm.groups()[1]) - int(hm.groups()[1]) + 1)
+                hm = cell2tuple(sr[0])
+                tm = cell2tuple(sr[1])
+                head = hm[0] + str(int(tm[1]) + 1)
+                tail = tm[0] + str(2 * int(tm[1]) - int(hm[1]) + 1)
                 result = ":".join([head, tail])
             return result
 
@@ -132,7 +104,7 @@ class ReportTemplate(collections.MutableMapping):
             raise GDReportError('Wrong reference %s (seems more than one semicolon) ' % item_range)
 
         for ref in refs:
-            if not cls._REG_.match(ref):
+            if not xlutils.__REG__.match(ref):
                 raise GDReportError('Reference %s (%s) is not valid' % (item_range, ref))
         return item_range
 
@@ -205,10 +177,10 @@ class ReportBuilder(object):
 
     def execute(self):
         for name, value in self._tt.iteritems():
-            if isinstance(value, ReportTemplate.Cell):
-                self._process_cell(value)
-            else:
+            if isinstance(value, ReportTemplate.Range):
                 self._process_range(value)
+            else:
+                self._process_cell(value)
 
     def _process_cell(self, cell):
         self._ss.set_cell(cell.range, self._dp.get_value(cell.name))
