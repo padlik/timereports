@@ -1,5 +1,4 @@
 #!/bin/env python
-import MySQLdb
 
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data

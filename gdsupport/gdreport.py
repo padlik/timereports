@@ -38,7 +38,7 @@ class ReportTemplate(collections.MutableMapping):
             super(ReportTemplate.Range, self).__init__(name, init_range)
             self._dynamic = kwargs.get('dynamic')
             if self._dynamic and not self._dynamic in ['rows', 'cols']:
-                raise GDReportError('Dynamic attribute should be in %' % str(['rows', 'cols']))
+                raise GDReportError('Dynamic attribute should be in %s' % str(['rows', 'cols']))
 
         @property
         def dynamic(self):
@@ -117,7 +117,6 @@ class ReportTemplate(collections.MutableMapping):
         for name, value in self._template.iteritems():
             self._report[name] = self._generators[self.__validate_type(value.get('type'))](name, **value)
 
-
     @property
     def template(self):
         return self._template
@@ -184,14 +183,14 @@ class ReportBuilder(object):
     def _process_cell(self, cell):
         self._ss.set_cell(cell.range, self._dp.get_value(cell.name))
 
-    def _process_range(self, range):
-        if range.dynamic:
-            r = range
-            for v in self._dp.get_range_value(range.name):
+    def _process_range(self, xlrange):
+        if xlrange.dynamic:
+            r = xlrange
+            for v in self._dp.get_range_value(xlrange.name):
                 self._ss.set_range(r.range, v)
                 r = r.next()
         else:
-            self._ss.set_range(range.range, self._dp.get_range_value(range.name))
+            self._ss.set_range(xlrange.range, self._dp.get_range_value(xlrange.name))
 
     @property
     def spreadsheet(self):

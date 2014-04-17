@@ -48,7 +48,7 @@ class GDQueryBuilder(object):
             s_sql += self._BODY % (f_date(dayt[0]), f_date(dayt[1]), self._n_weeks[n])
         #hack to provide 6th week in case if it is not present
         if len(s_cal) < 6:
-            s_sql += self._DUMMY % self._n_weeks[n + 1]
+            s_sql += self._DUMMY % self._n_weeks[6]
         s_sql += self._FOOT % (f_date(s_cal[0][0]), f_date(s_cal[-1][-1]))
         return s_sql
 

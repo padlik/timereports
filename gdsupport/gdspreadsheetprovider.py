@@ -12,13 +12,13 @@ class GDSpreadsheetProvider(SpreadsheetProvider):
         self._sheet = self.__init_provider(google_spreadsheet_id)
 
     @staticmethod
-    def __init_provider(id):
+    def __init_provider(ssid):
         db = inject.instance(SQLDb)
         s_sql = 'select param, value from oauthdata'
         c = db.cursor()
         c.execute(s_sql)
         params = {p: v for p, v in c.fetchall()}
-        return GSpreadSheet(id, params)
+        return GSpreadSheet(ssid, params)
 
     def set_cell(self, cell_range, value):
         tm = xlutils.cell2tuple(cell_range)
