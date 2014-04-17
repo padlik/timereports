@@ -23,7 +23,7 @@ class CachingObserver(BasicObserver):
 
 class UserListObserver(CachingObserver):
     def __init__(self):
-        super(UserListObserver).__init__()
+        super(UserListObserver, self).__init__()
         self._db = inject.instance(SQLDb)
 
     def pre_load(self):
@@ -48,7 +48,7 @@ class UserListObserver(CachingObserver):
 
 class TimesheetsObserver(CachingObserver):
     def __init__(self):
-        super(TimesheetsObserver).__init__()
+        super(TimesheetsObserver, self).__init__()
         self._db = inject.instance(SQLDb)
 
     def _get_users(self):
