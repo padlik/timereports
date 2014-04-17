@@ -6,7 +6,7 @@ import inject
 from primitives.lazydict import LazyDict
 from sugarcrmquery import ChainSugarCrmQuery
 from injectors import SugarDb
-from logger import Logger
+from primitives.logger import Logger
 
 
 class UserLazyList(LazyDict):

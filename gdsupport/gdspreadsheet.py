@@ -4,6 +4,7 @@ import gdata.spreadsheets.client
 import gdata.spreadsheets.data
 import gdata.gauth
 
+from primitives import logger
 from xlutils import range_dimension
 
 
@@ -61,19 +62,23 @@ class GSpreadSheet(object):
         self._s_magic = gid2id(sheet).lower()
         self._w_entry = self._client.GetWorksheet(self._worksheet_id, self._s_magic)
         self.batch = None
+        logger.Logger.debug("Connected to SS")
 
     def _get_batch(self):
         if not self.batch:
             obj_data = gdata.spreadsheets.data
             self.batch = obj_data.BuildBatchCellsUpdate(self._worksheet_id, self._s_magic)
+            logger.Logger.debug("Batch created")
         return self.batch
 
     def flush(self):
         if self.batch:
             self._client.batch(self.batch, force=True)
+            logger.Logger.debug("Batch flushed")
             self.batch = None
 
     def set_cell(self, row, col, value):
+        logger.Logger.debug("set_cell {}:{}=>{}".format(row, col, value))
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
         item.cell.input_value = str(value)
         self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
@@ -82,9 +87,11 @@ class GSpreadSheet(object):
 
     def get_cell(self, row, col):
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
+        logger.Logger.debug("get_cell {}:{}=>{}".format(row, col, item.cell.input_value))
         return item.cell.input_value
 
     def get_range(self, srange):
+
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         n_of_cols = int(cells.entry[-1].cell.col)
@@ -96,9 +103,11 @@ class GSpreadSheet(object):
             rows += 1
             if not cells.entry[0 + rows * n_of_cols:n_of_cols + rows * n_of_cols]:
                 break
+        logger.Logger.debug("get_range {} => {}".format(srange, matrix))
         return matrix
 
     def set_range(self, srange, matrix, clear_out=False):
+        logger.Logger.debug("set_range {} => {}".format(srange, matrix))
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         dim = range_dimension(srange)

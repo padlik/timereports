@@ -3,7 +3,7 @@
 from primitives.observer import BasicObserver
 import inject
 from injectors import SQLDb
-from logger import Logger
+from primitives.logger import Logger
 
 
 class CachingObserver(BasicObserver):
