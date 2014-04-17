@@ -6,7 +6,7 @@ from gdreport import DataProvider
 from injectors import SQLDb
 import inject
 from gdsqlbuilder import GDQueryBuilder
-from MySQLdb.constants import FIELD_TYPE
+
 
 class ReportDataProvider(DataProvider):
     def __init__(self, year, month, targets):

@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-import re
 import collections
+
 from xlutils import abc2col
 from xlutils import col2abc
 from xlutils import cell2tuple
 import xlutils
+
 
 TEMPLATE = {
     'update_date': {'type': 'cell', 'range': 'H1'},
@@ -18,9 +19,7 @@ class GDReportError(Exception):
     pass
 
 
-
 class ReportTemplate(collections.MutableMapping):
-
     class Cell(object):
         def __init__(self, key, cell_range):
             self._name = key
@@ -223,9 +222,9 @@ if __name__ == '__main__':
     report = ReportTemplate()
     builder = ReportBuilder()
     data = DataProvider()
-    sheet = SpreadsheetProvider()
-    report.template = TEMPLATE
-    builder.template = report
-    builder.datasource = data
-    builder.spreadsheet = sheet
-    builder.execute()
+    with SpreadsheetProvider() as sheet:
+        report.template = TEMPLATE
+        builder.template = report
+        builder.datasource = data
+        builder.spreadsheet = sheet
+        builder.execute()

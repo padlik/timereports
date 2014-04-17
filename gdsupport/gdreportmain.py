@@ -36,12 +36,12 @@ def do_run(config):
     report = ReportTemplate()
     builder = ReportBuilder()
     data = ReportDataProvider(config['year'], config['month'], (160, 160))
-    sheet = GDSpreadsheetProvider('0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E')
     report.template = TEMPLATE
     builder.template = report
     builder.datasource = data
-    builder.spreadsheet = sheet
-    builder.execute()
+    with GDSpreadsheetProvider('0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E') as sheet:
+        builder.spreadsheet = sheet
+        builder.execute()
 
 
 if __name__ == "__main__":

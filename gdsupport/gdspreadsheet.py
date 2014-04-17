@@ -4,9 +4,8 @@ import MySQLdb
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data
 import gdata.gauth
+
 from xlutils import range_dimension
-
-
 
 
 class GSpreadSheetError(Exception):
@@ -43,7 +42,6 @@ def gid2id(worksheet_id):
     return base36encode(int(worksheet_id ^ 31578))
 
 
-
 __APP__ = 'sugarreport.app'
 __SCOPE__ = 'https://spreadsheets.google.com/feeds/'
 
@@ -54,25 +52,38 @@ class GSpreadSheet(object):
 
     def __init__(self, worksheet_id, oauth2params, sheet=0):
         self._token = gdata.gauth.OAuth2Token(client_id=oauth2params['client_id'],
-                                             client_secret=oauth2params['client_sec'],
-                                             scope=self._scope, user_agent=self._ua,
-                                             access_token=oauth2params['client_at'],
-                                             refresh_token=oauth2params['client_rt'])
+                                              client_secret=oauth2params['client_sec'],
+                                              scope=self._scope, user_agent=self._ua,
+                                              access_token=oauth2params['client_at'],
+                                              refresh_token=oauth2params['client_rt'])
         self._client = gdata.spreadsheets.client.SpreadsheetsClient()
         self._token.authorize(self._client)
         self._worksheet_id = worksheet_id
         self._s_magic = gid2id(sheet).lower()
         self._w_entry = self._client.GetWorksheet(self._worksheet_id, self._s_magic)
+        self.batch = None
 
-    def set_cell(self, row, col, value, immediate=True):
+    def _get_batch(self):
+        if not self.batch:
+            obj_data = gdata.spreadsheets.data
+            self.batch = obj_data.BuildBatchCellsUpdate(self._worksheet_id, self._s_magic)
+        return self.batch
+
+    def flush(self):
+        if self.batch:
+            self._client.batch(self.batch, force=True)
+            self.batch = None
+
+    def set_cell(self, row, col, value):
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
         item.cell.input_value = str(value)
-        self._client.update(item, force=immediate)
+        self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
+                                          operation_string='update')
+        # self._client.update(item, force=immediate)
 
     def get_cell(self, row, col):
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
         return item.cell.input_value
-
 
     def get_range(self, srange):
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
@@ -88,13 +99,10 @@ class GSpreadSheet(object):
                 break
         return matrix
 
-    def set_range(self, srange, matrix, clear_out=False, immediate=True):
+    def set_range(self, srange, matrix, clear_out=False):
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
-        obj_data = gdata.spreadsheets.data
-        batch = obj_data.BuildBatchCellsUpdate(self._worksheet_id, self._s_magic)
         dim = range_dimension(srange)
-
         items = iter(cells.entry)
         for col, row in ((c, r) for c in xrange(dim[0]) for r in xrange(dim[1])):
             item = items.next()
@@ -103,8 +111,11 @@ class GSpreadSheet(object):
             except IndexError:
                 if clear_out:
                     item.cell.input_value = ''
-            batch.add_batch_entry(item, item.id.text, batch_id_string=item.title.text, operation_string='update')
-        self._client.batch(batch, force=immediate)
+            self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
+                                              operation_string='update')
+
+    def __del__(self):
+        self.flush()
 
     @property
     def dimension(self):
