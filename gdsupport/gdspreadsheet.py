@@ -104,15 +104,16 @@ class GSpreadSheet(object):
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         dim = range_dimension(srange)
         items = iter(cells.entry)
-        for col, row in ((c, r) for c in xrange(dim[0]) for r in xrange(dim[1])):
-            item = items.next()
-            try:
-                item.cell.input_value = matrix[row][col]
-            except IndexError:
-                if clear_out:
-                    item.cell.input_value = ''
-            self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
-                                              operation_string='update')
+        for row in xrange(dim[1]):
+            for col in xrange(dim[0]):
+                item = items.next()
+                try:
+                    item.cell.input_value = matrix[row][col]
+                except IndexError:
+                    if clear_out:
+                        item.cell.input_value = ''
+                self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
+                                                  operation_string='update')
 
     def __del__(self):
         self.flush()
@@ -142,35 +143,4 @@ class GSpreadSheet(object):
     @sheet.setter
     def sheet(self, sheet):
         self._s_magic = gid2id(sheet).lower()
-
-
-if __name__ == '__main__':
-    db = MySQLdb.connect(user='root', passwd='pass', db='time_reports', host='localhost', charset='utf8')
-    s_sql = 'select param, value from oauthdata'
-    c = db.cursor()
-    c.execute(s_sql)
-    params = {p: v for p, v in c.fetchall()}
-
-    st = '0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E'
-    sheet = GSpreadSheet(st, params)
-    print sheet.dimension
-    sheet.dimension = (10, 50)
-    print sheet.sheet
-    print sheet.dimension
-    print sheet.get_cell(1, 9)
-    r = sheet.get_range("A1")
-    print r
-    # r[0][1] = '160'
-    # r[1][1] = '160'
-    # r[2][1] = 'username!'
-    # sheet.set_range("A1:M3", r)
-    r = sheet.get_range("A4:I4")
-    print r
-    # sheet.set_range("A1:M3", [], clear_out=True)
-    # print sheet.get_range("A1:M3")
-    # sheet.set_range("A1:M3", r)
-    # print sheet.get_range("A1:M3")
-
-
-
 

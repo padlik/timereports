@@ -11,7 +11,7 @@ import xlutils
 TEMPLATE = {
     'update_date': {'type': 'cell', 'range': 'H1'},
     'update_time': {'type': 'cell', 'range': 'H2'},
-    'hour_report': {'type': 'range', 'range': 'A4:H4', 'dynamic': 'rows'}
+    'hour_report': {'type': 'range', 'range': 'A4:H46'}
 }
 
 
@@ -216,15 +216,3 @@ class ReportBuilder(object):
     @template.setter
     def template(self, template):
         self._tt = template
-
-
-if __name__ == '__main__':
-    report = ReportTemplate()
-    builder = ReportBuilder()
-    data = DataProvider()
-    with SpreadsheetProvider() as sheet:
-        report.template = TEMPLATE
-        builder.template = report
-        builder.datasource = data
-        builder.spreadsheet = sheet
-        builder.execute()

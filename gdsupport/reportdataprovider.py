@@ -25,33 +25,10 @@ class ReportDataProvider(DataProvider):
         return c.fetchall()
 
     def get_range_value(self, key):
-        for v in self._report_data[key]:
-            yield [v]
+        return [v for v in self._report_data[key]]
 
     def get_value(self, key):
         return self._report_data[key]
 
-
-if __name__ == "__main__":
-    import MySQLdb
-
-    my_conv = {}
-    mysql_conf = {'user': 'root',
-                  'passwd': 'pass',
-                  'db': 'time_reports',
-                  'host': 'localhost',
-                  #'charset': 'utf8',
-                  'conv': my_conv}
-    sql_db = MySQLdb.connect(**mysql_conf)
-
-    def my_config(binder):
-        binder.bind(SQLDb, sql_db)
-
-    inject.configure(my_config)
-    rdp = ReportDataProvider(2014, 4, (160, 160))
-    for v in rdp.get_range_value('hour_report'):
-        print v
-    print rdp.get_value('update_time')
-    print rdp.get_value('update_date')
 
 
