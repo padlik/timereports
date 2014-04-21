@@ -8,8 +8,8 @@ from paramsparser import AppParamsParser
 import inject
 from injectors import SQLDb
 from injectors import SugarDb
-from logger import Logger
-from logger import set_logging
+from primitives.logger import Logger
+from primitives.logger import set_logging
 import litesugarcrm
 import sqlobservers
 import lazycollect

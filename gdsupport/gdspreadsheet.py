@@ -1,12 +1,11 @@
 #!/bin/env python
-import MySQLdb
 
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data
 import gdata.gauth
+
+from primitives import logger
 from xlutils import range_dimension
-
-
 
 
 class GSpreadSheetError(Exception):
@@ -43,7 +42,6 @@ def gid2id(worksheet_id):
     return base36encode(int(worksheet_id ^ 31578))
 
 
-
 __APP__ = 'sugarreport.app'
 __SCOPE__ = 'https://spreadsheets.google.com/feeds/'
 
@@ -54,27 +52,46 @@ class GSpreadSheet(object):
 
     def __init__(self, worksheet_id, oauth2params, sheet=0):
         self._token = gdata.gauth.OAuth2Token(client_id=oauth2params['client_id'],
-                                             client_secret=oauth2params['client_sec'],
-                                             scope=self._scope, user_agent=self._ua,
-                                             access_token=oauth2params['client_at'],
-                                             refresh_token=oauth2params['client_rt'])
+                                              client_secret=oauth2params['client_sec'],
+                                              scope=self._scope, user_agent=self._ua,
+                                              access_token=oauth2params['client_at'],
+                                              refresh_token=oauth2params['client_rt'])
         self._client = gdata.spreadsheets.client.SpreadsheetsClient()
         self._token.authorize(self._client)
         self._worksheet_id = worksheet_id
         self._s_magic = gid2id(sheet).lower()
         self._w_entry = self._client.GetWorksheet(self._worksheet_id, self._s_magic)
+        self.batch = None
+        logger.Logger.debug("Connected to SS")
 
-    def set_cell(self, row, col, value, immediate=True):
+    def _get_batch(self):
+        if not self.batch:
+            obj_data = gdata.spreadsheets.data
+            self.batch = obj_data.BuildBatchCellsUpdate(self._worksheet_id, self._s_magic)
+            logger.Logger.debug("Batch created")
+        return self.batch
+
+    def flush(self):
+        if self.batch:
+            self._client.batch(self.batch, force=True)
+            logger.Logger.debug("Batch flushed")
+            self.batch = None
+
+    def set_cell(self, row, col, value):
+        logger.Logger.debug("set_cell {}:{}=>{}".format(row, col, value))
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
         item.cell.input_value = str(value)
-        self._client.update(item, force=immediate)
+        self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
+                                          operation_string='update')
+        # self._client.update(item, force=immediate)
 
     def get_cell(self, row, col):
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
+        logger.Logger.debug("get_cell {}:{}=>{}".format(row, col, item.cell.input_value))
         return item.cell.input_value
 
-
     def get_range(self, srange):
+
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         n_of_cols = int(cells.entry[-1].cell.col)
@@ -86,25 +103,28 @@ class GSpreadSheet(object):
             rows += 1
             if not cells.entry[0 + rows * n_of_cols:n_of_cols + rows * n_of_cols]:
                 break
+        logger.Logger.debug("get_range {} => {}".format(srange, matrix))
         return matrix
 
-    def set_range(self, srange, matrix, clear_out=False, immediate=True):
+    def set_range(self, srange, matrix, clear_out=False):
+        logger.Logger.debug("set_range {} => {}".format(srange, matrix))
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
-        obj_data = gdata.spreadsheets.data
-        batch = obj_data.BuildBatchCellsUpdate(self._worksheet_id, self._s_magic)
         dim = range_dimension(srange)
-
         items = iter(cells.entry)
-        for col, row in ((c, r) for c in xrange(dim[0]) for r in xrange(dim[1])):
-            item = items.next()
-            try:
-                item.cell.input_value = matrix[row][col]
-            except IndexError:
-                if clear_out:
-                    item.cell.input_value = ''
-            batch.add_batch_entry(item, item.id.text, batch_id_string=item.title.text, operation_string='update')
-        self._client.batch(batch, force=immediate)
+        for row in xrange(dim[1]):
+            for col in xrange(dim[0]):
+                item = items.next()
+                try:
+                    item.cell.input_value = matrix[row][col]
+                except IndexError:
+                    if clear_out:
+                        item.cell.input_value = ''
+                self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
+                                                  operation_string='update')
+
+    def __del__(self):
+        self.flush()
 
     @property
     def dimension(self):
@@ -131,35 +151,4 @@ class GSpreadSheet(object):
     @sheet.setter
     def sheet(self, sheet):
         self._s_magic = gid2id(sheet).lower()
-
-
-if __name__ == '__main__':
-    db = MySQLdb.connect(user='root', passwd='pass', db='time_reports', host='localhost', charset='utf8')
-    s_sql = 'select param, value from oauthdata'
-    c = db.cursor()
-    c.execute(s_sql)
-    params = {p: v for p, v in c.fetchall()}
-
-    st = '0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E'
-    sheet = GSpreadSheet(st, params)
-    print sheet.dimension
-    sheet.dimension = (10, 50)
-    print sheet.sheet
-    print sheet.dimension
-    print sheet.get_cell(1, 9)
-    r = sheet.get_range("A1")
-    print r
-    # r[0][1] = '160'
-    # r[1][1] = '160'
-    # r[2][1] = 'username!'
-    # sheet.set_range("A1:M3", r)
-    r = sheet.get_range("A4:I4")
-    print r
-    # sheet.set_range("A1:M3", [], clear_out=True)
-    # print sheet.get_range("A1:M3")
-    # sheet.set_range("A1:M3", r)
-    # print sheet.get_range("A1:M3")
-
-
-
 

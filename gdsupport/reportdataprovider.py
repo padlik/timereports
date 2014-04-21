@@ -5,8 +5,9 @@ import datetime
 from gdreport import DataProvider
 from injectors import SQLDb
 import inject
+from primitives import logger
 from gdsqlbuilder import GDQueryBuilder
-from MySQLdb.constants import FIELD_TYPE
+
 
 class ReportDataProvider(DataProvider):
     def __init__(self, year, month, targets):
@@ -21,37 +22,17 @@ class ReportDataProvider(DataProvider):
         builder = GDQueryBuilder(year=year, month=month)
         q_sql = builder.query
         c = db.cursor()
+        logger.Logger.debug("Executing => {}".format(q_sql))
         c.execute(q_sql)
         return c.fetchall()
 
     def get_range_value(self, key):
-        for v in self._report_data[key]:
-            yield [v]
+        logger.Logger.debug("range for key => {}".format(key))
+        return [v for v in self._report_data[key]]
 
     def get_value(self, key):
+        logger.Logger.debug("value for key => {}".format(key))
         return self._report_data[key]
 
-
-if __name__ == "__main__":
-    import MySQLdb
-
-    my_conv = {}
-    mysql_conf = {'user': 'root',
-                  'passwd': 'pass',
-                  'db': 'time_reports',
-                  'host': 'localhost',
-                  #'charset': 'utf8',
-                  'conv': my_conv}
-    sql_db = MySQLdb.connect(**mysql_conf)
-
-    def my_config(binder):
-        binder.bind(SQLDb, sql_db)
-
-    inject.configure(my_config)
-    rdp = ReportDataProvider(2014, 4, (160, 160))
-    for v in rdp.get_range_value('hour_report'):
-        print v
-    print rdp.get_value('update_time')
-    print rdp.get_value('update_date')
 
 

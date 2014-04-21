@@ -7,9 +7,10 @@ import MySQLdb.converters
 from paramsparser import AppParamsParser
 import inject
 from injectors import SQLDb
-from gdreport import ReportBuilder, ReportTemplate, TEMPLATE
-from gdspreadsheetprovider import GDSpreadsheetProvider
-from reportdataprovider import ReportDataProvider
+from gdsupport.gdreport import ReportBuilder, ReportTemplate, TEMPLATE
+from gdsupport.gdspreadsheetprovider import GDSpreadsheetProvider
+from gdsupport.reportdataprovider import ReportDataProvider
+from primitives import logger
 
 
 def do_parse(argv):
@@ -18,12 +19,13 @@ def do_parse(argv):
 
 
 def do_inject(config):
+    logger.Logger.debug('injecting')
     mysql_conf = {'user': config['mysql.user'],
                   'passwd': config['mysql.password'],
                   'db': config['mysql.db'],
                   'host': config['mysql.host'],
-                  #'charset': 'utf8',
                   'conv': {}}
+    #conv is added to return all the values as strings which is good for google
     sql_db = MySQLdb.connect(**mysql_conf)
 
     def my_config(binder):
@@ -36,17 +38,17 @@ def do_run(config):
     report = ReportTemplate()
     builder = ReportBuilder()
     data = ReportDataProvider(config['year'], config['month'], (160, 160))
-    sheet = GDSpreadsheetProvider('0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E')
     report.template = TEMPLATE
     builder.template = report
     builder.datasource = data
-    builder.spreadsheet = sheet
-    builder.execute()
+    with GDSpreadsheetProvider('0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E') as sheet:
+        builder.spreadsheet = sheet
+        builder.execute()
 
 
 if __name__ == "__main__":
     config = do_parse(sys.argv[1:])
-    # set_logging(config)
+    logger.set_logging(config)
     do_inject(config)
     do_run(config)
 
