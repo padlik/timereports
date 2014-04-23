@@ -30,8 +30,8 @@ class ConfigException(Exception):
 
 
 class BasicParamsParser(collections.MutableMapping):
-    def __init__(self, caption=None, config=None):
-        self._args_parser = argparse.ArgumentParser(caption or "program")
+    def __init__(self, caption=None, config=None, need_help=True):
+        self._args_parser = argparse.ArgumentParser(prog=caption or "program", add_help=need_help)
         self._raw_config = config or CONFIG
         self._opts = {}
         for k, v in self._raw_config.iteritems():

@@ -3,12 +3,12 @@
 from primitives.observer import BasicObserver
 import inject
 from injectors import SQLDb
-from logger import Logger
+from primitives.logger import Logger
+
 
 class CachingObserver(BasicObserver):
     def __init__(self):
         self._updated = []
-        self._db = inject.instance(SQLDb)
 
     def notify(self, sender, *m_args, **m_kwargs):
         self._updated.append(m_args)
@@ -22,6 +22,10 @@ class CachingObserver(BasicObserver):
 
 
 class UserListObserver(CachingObserver):
+    def __init__(self):
+        super(UserListObserver, self).__init__()
+        self._db = inject.instance(SQLDb)
+
     def pre_load(self):
         Logger.debug("In UserList pre-load")
         q_sql = "select sugar_uname, sugar_id from users"
@@ -43,6 +47,10 @@ class UserListObserver(CachingObserver):
 
 
 class TimesheetsObserver(CachingObserver):
+    def __init__(self):
+        super(TimesheetsObserver, self).__init__()
+        self._db = inject.instance(SQLDb)
+
     def _get_users(self):
         q_sql = "select sugar_id, id from users"
         c = self._db.cursor()
