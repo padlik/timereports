@@ -30,7 +30,7 @@ class TimesheetsLazyList(LazyDict):
         super(TimesheetsLazyList, self).__init__(*args, **kwargs)
         self._year = 2014
         self._month = 2
-        self._fields = ['created_by', 'activity_date', 'time_spent', 'description', 'id']
+        self._fields = ['created_by', 'activity_date', 'time_spent', 'description', 'id', 'name']
 
 
     @property
