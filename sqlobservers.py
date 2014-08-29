@@ -62,7 +62,8 @@ class TimesheetsObserver(CachingObserver):
             Logger.debug("Inside timesheets flush")
             users = self._get_users()
             Logger.debug("Inside timesheets flush. Users->{}".format(users))
-            fields = kwargs.get('fields', ['userid', 'created_by', 'activity_date', 'time_spent', 'description', 'id'])
+            fields = kwargs.get('fields',
+                                ['userid', 'created_by', 'activity_date', 'time_spent', 'description', 'id', 'name'])
             Logger.debug("Inside timesheets flush. Fields->{}".format(fields))
             if not 'userid' in fields:
                 fields = ['userid'] + fields
