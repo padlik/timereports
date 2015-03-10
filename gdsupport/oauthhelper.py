@@ -44,7 +44,6 @@ def get_oauth_params():
     c = db.cursor()
     c.execute('select param, value from time_reports.oauthdata')
     params = {p: v for p, v in c.fetchall()}
-    db.close()
     return params
 
 
@@ -55,7 +54,6 @@ def set_oauth_params(data):
                ON DUPLICATE KEY UPDATE value = values(value)"""
     c.executemany(s_qry, data)
     db.commit()
-    db.close()
     return data
 
 
@@ -76,8 +74,11 @@ if __name__ == '__main__':
     def my_config(binder):
         binder.bind(SQLDb, sqldb)
 
+    inject.configure(my_config)
     params = get_oauth_params()
     params = refresh_tokens(params)
     print params
     data = [(k, v) for k, v in params.iteritems()]
-    set_oauth_params(*data)
+    set_oauth_params(data)
+    db = inject.instance(SQLDb)
+    db.close()
