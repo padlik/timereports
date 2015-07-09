@@ -10,8 +10,10 @@ import inject
 from injectors import SQLDb
 from injectors import Jira
 from primitives.logger import Logger
+from multiprocessing import Pool
 
 config = None
+email_prefix = "intetics.com"
 
 
 def do_parse(argv):
@@ -40,10 +42,10 @@ def do_inject():
     inject.configure(my_config)
 
 
-def prepare_users():
+def get_users():
     db = inject.instance(SQLDb)
-    q_sql = "select id, intetics_uname from users where dissmissed = 'N'"
-    c = db.cursor
+    q_sql = "select id, TRIM(intetics_uname) from users where dissmissed = 'N'"
+    c = db.cursor()
     c.execute(q_sql)
     return c.fetchall()
 
@@ -59,7 +61,12 @@ def report_worker(user):
         last = datetime.datetime(year=year, month=month, day=calendar.monthrange(year, month)[1])
         return tuple([first, last])
 
-    def jira2date(date_string):
+    def jdate2pydate(date_string):
+        """
+        Converts JIRA date string to Python simple date value
+        :param date_string: JIRA string date
+        :return: Simple Python date without time zone
+        """
         import iso8601
         import datetime
 
@@ -69,7 +76,7 @@ def report_worker(user):
 
     jira = inject.instance(Jira)
     start_date, finish_date = get_dates()
-    Logger.debug("Dates to query from {} to {}".format(start_date, finish_date))
+    Logger.debug("Querying from {} to {}".format(start_date, finish_date))
     qry = 'key in workedIssues("{start}", "{finish}", "{user}")'.format(start=start_date.strftime("%Y/%m/%d"),
                                                                         finish=finish_date.strftime("%Y/%m/%d"),
                                                                         user=user)
@@ -78,8 +85,7 @@ def report_worker(user):
     ts = []
     for i in issues:
         for w in [w for w in jira.worklogs(i.key) if w.author.name == user]:
-
-            d_created = jira2date(w.started)
+            d_created = jdate2pydate(w.started)
             if start_date <= d_created <= finish_date:  # it might happens too!
                 ts.append([w.id, w.comment, w.timeSpentSeconds, d_created])
     Logger.debug("Timesheets for user {} are {}".format(user, ts))
@@ -92,4 +98,10 @@ if __name__ == "__main__":
 
     set_logging(config)
     do_inject()
-    print report_worker("p.pronko@intetics.com")
+    users = get_users()
+    emails = [v[1] + "@" + email_prefix for v in users]
+    pool = Pool(5)
+    results = pool.map(report_worker, emails)
+    pool.close()
+    pool.join()
+    print len(results)
