@@ -2,6 +2,7 @@ __author__ = 'paul'
 
 import MySQLdb
 import sys
+from multiprocessing import Pool
 
 from jira.client import JIRA
 
@@ -10,7 +11,6 @@ import inject
 from injectors import SQLDb
 from injectors import Jira
 from primitives.logger import Logger
-from multiprocessing import Pool
 
 config = None
 email_prefix = "intetics.com"
@@ -100,8 +100,11 @@ if __name__ == "__main__":
     do_inject()
     users = get_users()
     emails = [v[1] + "@" + email_prefix for v in users]
-    pool = Pool(5)
-    results = pool.map(report_worker, emails)
+    max_threads = int(config.get("jira.max_threads", 5))
+    pool = Pool(max_threads)
+    results = pool.map(report_worker, emails[:5])
     pool.close()
     pool.join()
-    print len(results)
+    for r in results:
+        for u, ts in r.iteritems():
+            print "{}->{} hrs".format(u, sum(map(float, [t[2] for t in ts])) / 3600)
