@@ -3,6 +3,7 @@ __author__ = 'paul'
 import MySQLdb
 import sys
 from multiprocessing import Pool
+import time
 
 from jira.client import JIRA
 
@@ -44,10 +45,24 @@ def do_inject():
 
 def get_users():
     db = inject.instance(SQLDb)
-    q_sql = "select id, TRIM(intetics_uname) from users where dissmissed = 'N'"
+    q_sql = "select TRIM(concat(intetics_uname,'@intetics.com')), id from users where dissmissed = 'N'"
     c = db.cursor()
     c.execute(q_sql)
-    return c.fetchall()
+    return dict(c.fetchall())
+
+
+def set_timesheets(ts):
+    db = inject.instance(SQLDb)
+    flds = ['userid', 'id', 'description', 'time_spent', 'activity_date', 'source']
+    Logger.debug("Updating with fields {}".format(flds))
+    q_sql = 'insert into timesheets( ' + ','.join(flds) + ') values (' + ','.join(
+        ['%s'] * (len(flds))) + ')'
+    q_sql += ' ON DUPLICATE KEY UPDATE %s = VALUES(%s) ' % ('time_spent', 'time_spent')
+    Logger.debug("Update query: {}".format(q_sql))
+    c = db.cursor()
+    c.executemany(q_sql, ts)
+    db.commit()
+    Logger.debug("Update completed")
 
 
 def report_worker(user):
@@ -81,13 +96,13 @@ def report_worker(user):
                                                                         finish=finish_date.strftime("%Y/%m/%d"),
                                                                         user=user)
     Logger.debug("Query is {}".format(qry))
-    issues = jira.search_issues(qry)
+    issues = jira.search_issues(jql_str=qry, maxResults=1000)
     ts = []
     for i in issues:
         for w in [w for w in jira.worklogs(i.key) if w.author.name == user]:
             d_created = jdate2pydate(w.started)
             if start_date <= d_created <= finish_date:  # it might happens too!
-                ts.append([w.id, w.comment, w.timeSpentSeconds, d_created])
+                ts.append([w.id, w.comment, float(w.timeSpentSeconds) / 3600, d_created])
     Logger.debug("Timesheets for user {} are {}".format(user, ts))
     return {user: ts}
 
@@ -99,12 +114,20 @@ if __name__ == "__main__":
     set_logging(config)
     do_inject()
     users = get_users()
-    emails = [v[1] + "@" + email_prefix for v in users]
+    emails = users.keys()
     max_threads = int(config.get("jira.max_threads", 5))
+    Logger.info("Starting {} threads {}".format(max_threads, time.clock()))
     pool = Pool(max_threads)
-    results = pool.map(report_worker, emails[:5])
+    results = pool.map(report_worker, users)
     pool.close()
     pool.join()
+    Logger.info("Stopping {}".format(time.clock()))
+    timesheets = []
     for r in results:
         for u, ts in r.iteritems():
-            print "{}->{} hrs".format(u, sum(map(float, [t[2] for t in ts])) / 3600)
+            Logger.debug("{}->{} hrs".format(u, sum([t[2] for t in ts]) / 3600))
+            Logger.debug("User: {} and timesheet {}".format(users[u], ts))
+            for t in ts:
+                timesheets.append([users[u]] + t + ['JIRA'])
+    set_timesheets(timesheets)
+    Logger.debug("All done")
