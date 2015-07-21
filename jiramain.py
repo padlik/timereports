@@ -23,6 +23,10 @@ def do_parse(argv):
 
 
 def do_inject():
+    """
+
+    :return: Nothing
+    """
     mysql_conf = {'user': config['mysql.user'],
                   'passwd': config['mysql.password'],
                   'db': config['mysql.db'],
@@ -44,6 +48,10 @@ def do_inject():
 
 
 def get_users():
+    """
+
+    :return: Dict of {user_name: id} from MySQL DB
+    """
     db = inject.instance(SQLDb)
     q_sql = "select TRIM(concat(intetics_uname,'@intetics.com')), id from users where dissmissed = 'N'"
     c = db.cursor()
@@ -52,6 +60,12 @@ def get_users():
 
 
 def set_timesheets(ts):
+    """
+
+    :param ts: timesheets for a user
+    :return: nothing
+    """
+
     db = inject.instance(SQLDb)
     flds = ['userid', 'id', 'description', 'time_spent', 'activity_date', 'source']
     Logger.debug("Updating with fields {}".format(flds))
@@ -66,7 +80,16 @@ def set_timesheets(ts):
 
 
 def report_worker(user):
+    """
+
+    :param user: jira user name for timesheets retrieval
+    :return: Dict {user_name: [array of timesheets]}
+    """
     def get_dates():
+        """
+
+        :return: First and last day of a month for reporting
+        """
         import datetime
         import calendar
 
