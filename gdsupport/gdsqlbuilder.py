@@ -8,7 +8,9 @@ class GDQueryBuilder(object):
     _n_weeks = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
     _HEAD = """ select users.sugar_uname AS username,"""
     _BODY = """ sum((case
-                when (timesheets.activity_date between '%s' and '%s') then timesheets.time_spent
+                when (timesheets.activity_date between '%s' and '%s')
+                      and (IFNULL(timesheets.source,'') <> 'JIRA')
+                then timesheets.time_spent
                 else 0
                 end)) AS %s_week, """
     _DUMMY = """0 as %s_week, """
@@ -42,7 +44,7 @@ class GDQueryBuilder(object):
 
     def _build_query(self):
         def make_calendar(year, month):
-            #just first days of weeks are required
+            # just first days of weeks are required
             z_trim = lambda x: [d for d in x if d != 0]
             cal.setfirstweekday(cal.MONDAY)
             weeks = cal.monthcalendar(year, month)
@@ -59,7 +61,7 @@ class GDQueryBuilder(object):
         for n, dayt in enumerate(s_cal):
             s_sql += self._BODY % (f_date(dayt[0]), f_date(dayt[1]), self._n_weeks[n])
             logger.Logger.debug("Adjusting number of weeks to 6")
-        #hack to provide 6th week in case if it is not present
+        # hack to provide 6th week in case if it is not present
         if len(s_cal) < 6:
             s_sql += self._DUMMY % self._n_weeks[5]
         s_sql += self._FOOT.format(start_date=f_date(s_cal[0][0]), end_date=f_date(s_cal[-1][-1]))
