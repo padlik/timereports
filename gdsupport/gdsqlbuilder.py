@@ -8,18 +8,29 @@ class GDQueryBuilder(object):
     _n_weeks = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
     _HEAD = """ select users.sugar_uname AS username,"""
     _BODY = """ sum((case
-                when (timesheets.activity_date between '%s' and '%s') then timesheets.time_spent
+                when (timesheets.activity_date between '%s' and '%s')
+                      and (IFNULL(timesheets.source,'') <> 'JIRA')
+                then timesheets.time_spent
                 else 0
                 end)) AS %s_week, """
     _DUMMY = """0 as %s_week, """
     _FOOT = """ sum((case
                 when
-                ((timesheets.activity_date between '%s' and '%s')
+                ((timesheets.activity_date between '{start_date}' and '{end_date}')
                     and (timesheets.description like 'overtime%%'))
                 then
                     timesheets.time_spent
                 else 0
-                end)) AS overtime
+                end)) AS overtime,
+                sum(case
+                    when
+                        ((timesheets.source is not null)
+                            and (timesheets.time_spent
+                            and timesheets.activity_date between '{start_date}' and '{end_date}'))
+                    then
+                        timesheets.time_spent
+                    else 0
+                end) AS jira
                 from
                 (users
                 left join timesheets ON ((timesheets.userid = users.id)))
@@ -33,7 +44,7 @@ class GDQueryBuilder(object):
 
     def _build_query(self):
         def make_calendar(year, month):
-            #just first days of weeks are required
+            # just first days of weeks are required
             z_trim = lambda x: [d for d in x if d != 0]
             cal.setfirstweekday(cal.MONDAY)
             weeks = cal.monthcalendar(year, month)
@@ -50,10 +61,10 @@ class GDQueryBuilder(object):
         for n, dayt in enumerate(s_cal):
             s_sql += self._BODY % (f_date(dayt[0]), f_date(dayt[1]), self._n_weeks[n])
             logger.Logger.debug("Adjusting number of weeks to 6")
-        #hack to provide 6th week in case if it is not present
+        # hack to provide 6th week in case if it is not present
         if len(s_cal) < 6:
             s_sql += self._DUMMY % self._n_weeks[5]
-        s_sql += self._FOOT % (f_date(s_cal[0][0]), f_date(s_cal[-1][-1]))
+        s_sql += self._FOOT.format(start_date=f_date(s_cal[0][0]), end_date=f_date(s_cal[-1][-1]))
         logger.Logger.debug("Query build for {0},{1} is: {2}".format(self.year, self.month, s_sql))
         return s_sql
 
@@ -81,6 +92,6 @@ class GDQueryBuilder(object):
 if __name__ == '__main__':
     report = GDQueryBuilder()
     # print report.cursor
-    report.year = 2014
-    report.month = 4
+    report.year = 2015
+    report.month = 7
     print report.query
