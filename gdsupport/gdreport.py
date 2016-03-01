@@ -11,7 +11,7 @@ import xlutils
 TEMPLATE = {
     'update_date': {'type': 'cell', 'range': 'H1'},
     'update_time': {'type': 'cell', 'range': 'H2'},
-    'hour_report': {'type': 'range', 'range': 'A4:I60'}
+    'hour_report': {'type': 'range', 'range': 'A4:I70'}
 }
 
 
