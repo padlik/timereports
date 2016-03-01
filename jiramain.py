@@ -46,6 +46,11 @@ def do_inject():
     Logger.debug("Injection complete")
     inject.configure(my_config)
 
+def get_jira():
+    jira_opts = {'server': config['jira.url']}
+    jira_auth = (config['jira.user'], config['jira.password'])
+    jira = JIRA(options=jira_opts, basic_auth=jira_auth)
+    return jira
 
 def get_users():
     """
@@ -112,7 +117,8 @@ def report_worker(user):
         simple_date = datetime.datetime(year=complex_date.year, month=complex_date.month, day=complex_date.day)
         return simple_date
 
-    jira = inject.instance(Jira)
+    #jira = inject.instance(Jira)
+    jira = get_jira()
     start_date, finish_date = get_dates()
     Logger.debug("Querying from {} to {}".format(start_date, finish_date))
     qry = 'key in workedIssues("{start}", "{finish}", "{user}")'.format(start=start_date.strftime("%Y/%m/%d"),
