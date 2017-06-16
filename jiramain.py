@@ -46,11 +46,18 @@ def do_inject():
     Logger.debug("Injection complete")
     inject.configure(my_config)
 
+
 def get_jira():
+    """
+    
+    :return jira object initilized separately for each thread
+    """
     jira_opts = {'server': config['jira.url']}
     jira_auth = (config['jira.user'], config['jira.password'])
     jira = JIRA(options=jira_opts, basic_auth=jira_auth)
     return jira
+
+
 
 def get_users():
     """
@@ -128,9 +135,12 @@ def report_worker(user):
     issues = jira.search_issues(jql_str=qry, maxResults=1000)
     ts = []
     for i in issues:
+	Logger.debug("Issues found {}".format(user))
         for w in [w for w in jira.worklogs(i.key) if w.author.name == user]:
             d_created = jdate2pydate(w.started)
+	    Logger.debug("Worklog date for {} is {}".format(user,d_created))
             if start_date <= d_created <= finish_date:  # it might happens too!
+		Logger.debug("We are in the time frame {} {} {}".format(user, start_date, finish_date))
                 ts.append([w.id, w.comment, float(w.timeSpentSeconds) / 3600, d_created])
     Logger.debug("Timesheets for user {} are {}".format(user, ts))
     return {user: ts}

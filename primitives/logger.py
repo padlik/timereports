@@ -15,7 +15,8 @@ def set_logging(config):
         handler = logging.StreamHandler(sys.stdout)
         logger.setLevel(logging.DEBUG)
     else:
-        handler = logging.handlers.SysLogHandler('/dev/log')
+        #handler = logging.handlers.SysLogHandler('/dev/log')
+        handler = logging.StreamHandler(sys.stdout) 
         logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s %(name)s: %(levelname)s %(message)s')

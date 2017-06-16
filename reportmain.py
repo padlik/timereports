@@ -64,6 +64,8 @@ def do_run(config):
     Logger.info('Timesheets: {}'.format(logstr))
     for o in observers:
         o.flush()
+    sugardb = inject.instance(SugarDb)
+    sugardb.close()
     Logger.info('Done')
 
 

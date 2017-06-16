@@ -23,6 +23,9 @@ class LiteSugarCRM(object):
     def execute(self, method, *args):
         return self.request(method, [self._session] + list(args))
 
+    def close(self):
+	return self.request('logout', [self._session])
+
     def _connect(self, user, passwd):
 
         args = {'user_auth': {'user_name': user,
