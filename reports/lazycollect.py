@@ -3,10 +3,10 @@
 import calendar
 
 import inject
-from primitives.lazydict import LazyDict
-from sugarcrmquery import ChainSugarCrmQuery
 from injectors import SugarDb
-from primitives.logger import Logger
+from primitives import LazyDict
+from primitives import Logger
+from sugarcrmquery import ChainSugarCrmQuery
 
 
 class UserLazyList(LazyDict):
@@ -31,7 +31,6 @@ class TimesheetsLazyList(LazyDict):
         self._year = 2014
         self._month = 2
         self._fields = ['created_by', 'activity_date', 'time_spent', 'description', 'id', 'name']
-
 
     @property
     def fields(self):
@@ -69,9 +68,9 @@ class TimesheetsLazyList(LazyDict):
             Logger.debug('TS List: Query params->fields:{}'.format(self._fields))
             Logger.debug('TS List: Query params->created_by:{}'.format(keys))
             Logger.debug('TS List: Query params->activity date between:{}'.format(dates))
-            qry.cursor().select_(self._fields).from_('ps_Timesheets').where_(
-            ).in_('ps_timesheets.created_by', keys, esq=True).and_().bw_('ps_timesheets.activity_date', dates,
-                                                                         esq=True).end_()
+            qry.cursor().select_(self._fields).from_('ps_Timesheets').where_().in_('ps_timesheets.created_by', keys,
+                                                                                   esq=True).and_().bw_(
+                'ps_timesheets.activity_date', dates, esq=True).end_()
             # ts = collections.defaultdict(list)
             ts = {k: [] for k in keys}
             for entries in qry.fetch_all():
@@ -82,4 +81,3 @@ class TimesheetsLazyList(LazyDict):
         else:
             Logger.debug('TS List: No items to update, passing')
             return items
-

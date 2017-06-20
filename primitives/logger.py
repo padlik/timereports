@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#Logging configuration
-#Should be pretty simple
+# Logging configuration
+# Should be pretty simple
 
-import logging.handlers
 import logging
+import logging.handlers
 import sys
 
 LOG_MODULE = 'tsreports'
@@ -15,7 +15,8 @@ def set_logging(config):
         handler = logging.StreamHandler(sys.stdout)
         logger.setLevel(logging.DEBUG)
     else:
-        handler = logging.handlers.SysLogHandler('/dev/log')
+        # handler = logging.handlers.SysLogHandler('/dev/log')
+        handler = logging.StreamHandler(sys.stdout)
         logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s %(name)s: %(levelname)s %(message)s')
@@ -24,5 +25,3 @@ def set_logging(config):
 
 
 Logger = logging.getLogger(LOG_MODULE)
-
-

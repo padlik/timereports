@@ -65,4 +65,3 @@ class LazyDict(collections.MutableMapping):
 
     def real_delitem(self, item):
         del self._lazy_dict[item]
-

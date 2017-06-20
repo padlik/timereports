@@ -66,7 +66,7 @@ class Dispatcher(object):
         members = self._get_inst_members(instance, method)
         for k, real_method in members:
             m_hash = self._make_hash(instance, method)
-            if not m_hash in self._monitored:
+            if m_hash not in self._monitored:
                 self._monitored[m_hash] = []
                 self._mon_obj_info[m_hash] = (instance.__class__.__name__, method, real_method)
                 real_method = self._wrap_observer(real_method)
@@ -82,7 +82,7 @@ class Dispatcher(object):
     def subscribe(self, observer, instance, method):
         m_hash = self._make_hash(instance, method)
         if m_hash in self._monitored:
-            if not observer in self._monitored[m_hash]:
+            if observer not in self._monitored[m_hash]:
                 self._monitored[m_hash].append(observer)
         else:
             raise EventNotRegistered("{}.{} is not registered".format(instance.__class__.__name__, method))

@@ -2,17 +2,13 @@
 
 import collections
 
-from xlutils import abc2col
-from xlutils import col2abc
-from xlutils import cell2tuple
 import xlutils
+from xlutils import abc2col
+from xlutils import cell2tuple
+from xlutils import col2abc
 
-
-TEMPLATE = {
-    'update_date': {'type': 'cell', 'range': 'H1'},
-    'update_time': {'type': 'cell', 'range': 'H2'},
-    'hour_report': {'type': 'range', 'range': 'A4:I70'}
-}
+TEMPLATE = {'update_date': {'type': 'cell', 'range': 'H1'}, 'update_time': {'type': 'cell', 'range': 'H2'},
+            'hour_report': {'type': 'range', 'range': 'A4:I70'}}
 
 
 class GDReportError(Exception):
@@ -37,7 +33,7 @@ class ReportTemplate(collections.MutableMapping):
         def __init__(self, name, init_range, **kwargs):
             super(ReportTemplate.Range, self).__init__(name, init_range)
             self._dynamic = kwargs.get('dynamic')
-            if self._dynamic and not self._dynamic in ['rows', 'cols']:
+            if self._dynamic and  self._dynamic not in ['rows', 'cols']:
                 raise GDReportError('Dynamic attribute should be in %s' % str(['rows', 'cols']))
 
         @property
@@ -75,11 +71,9 @@ class ReportTemplate(collections.MutableMapping):
         def next(self):
             new_range = self
             if self.dynamic == 'rows':
-                new_range = ReportTemplate.Range(self._name, self._next_row(self._range),
-                                                 **{'dynamic': self._dynamic})
+                new_range = ReportTemplate.Range(self._name, self._next_row(self._range), **{'dynamic': self._dynamic})
             elif self.dynamic == 'cols':
-                new_range = ReportTemplate.Range(self._name, self._next_col(self._range),
-                                                 **{'dynamic': self._dynamic})
+                new_range = ReportTemplate.Range(self._name, self._next_col(self._range), **{'dynamic': self._dynamic})
             return new_range
 
     def __init__(self, template=None):
@@ -89,7 +83,7 @@ class ReportTemplate(collections.MutableMapping):
 
     @staticmethod
     def __validate_type(item_type):
-        if not item_type in ['cell', 'range']:
+        if item_type not in ['cell', 'range']:
             raise GDReportError('Expecting cell or range type items')
         return item_type
 
