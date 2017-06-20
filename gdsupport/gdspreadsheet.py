@@ -1,9 +1,9 @@
 #!/bin/env python
 
 
+import gdata.gauth
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data
-import gdata.gauth
 
 from primitives import logger
 from xlutils import range_dimension
@@ -53,9 +53,8 @@ class GSpreadSheet(object):
 
     def __init__(self, worksheet_id, oauth2params, sheet=0):
         self._token = gdata.gauth.OAuth2Token(client_id=oauth2params['client_id'],
-                                              client_secret=oauth2params['client_sec'],
-                                              scope=self._scope, user_agent=self._ua,
-                                              refresh_token=oauth2params['client_rt'])
+                                              client_secret=oauth2params['client_sec'], scope=self._scope,
+                                              user_agent=self._ua, refresh_token=oauth2params['client_rt'])
         self._client = gdata.spreadsheets.client.SpreadsheetsClient()
         self._token.authorize(self._client)
         self._token._refresh(self._client.http_client.request)
@@ -154,4 +153,3 @@ class GSpreadSheet(object):
     @sheet.setter
     def sheet(self, sheet):
         self._s_magic = gid2id(sheet).lower()
-

@@ -53,4 +53,3 @@ def range_dimension(xlrange):
         tail_row = int(tcell[1])
         nofcols = (tail_col - head_col + 1, tail_row - head_row + 1)
     return nofcols
-

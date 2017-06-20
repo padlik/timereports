@@ -2,11 +2,11 @@
 
 import functools
 
-from primitives.chaininterpret import SimpleGrammar
-from primitives.chaininterpret import StateMachine
-from primitives.chaininterpret import ChainInterpreter
-from primitives.chaininterpret import AbstractListener
-from primitives.chaininterpret import GrammarError
+from primitives import AbstractListener
+from primitives import ChainInterpreter
+from primitives import GrammarError
+from primitives import SimpleGrammar
+from primitives import StateMachine
 
 
 class ChainSugarCrmQuery(AbstractListener):
@@ -62,8 +62,7 @@ class ChainSugarCrmQuery(AbstractListener):
 
             eq = functools.partial(esq, isesq=frame.kwargs.get('esq', False))
             if frame.ctx == 'in_':
-                _q += ' ' + frame.args[0] + ' IN ({0})'.format(
-                    ','.join(map(eq, frame.args[1])))
+                _q += ' ' + frame.args[0] + ' IN ({0})'.format(','.join(map(eq, frame.args[1])))
             elif frame.ctx == 'gt_':
                 _q += ' ' + frame.args[0] + '>' + eq(frame.args[1])
             elif frame.ctx == 'lt_':
@@ -95,12 +94,8 @@ class ChainSugarCrmQuery(AbstractListener):
 
         @classmethod
         def translate(cls, stmt, frame):
-            _state_events = {'INIT': cls._prepare_default,
-                             'SELECT': cls._prepare_select,
-                             'FROM': cls._prepare_from,
-                             'WHERE': cls._prepare_where,
-                             'OP': cls._prepare_op,
-                             'NON_TERM': cls._prepare_nterm,
+            _state_events = {'INIT': cls._prepare_default, 'SELECT': cls._prepare_select, 'FROM': cls._prepare_from,
+                             'WHERE': cls._prepare_where, 'OP': cls._prepare_op, 'NON_TERM': cls._prepare_nterm,
                              'TERM': cls._prepare_term}
             return _state_events[frame.cmd](stmt, frame)
 

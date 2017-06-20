@@ -3,10 +3,10 @@
 import datetime
 
 from gdreport import DataProvider
-from injectors import SQLDb
-import inject
-from primitives import logger
 from gdsqlbuilder import GDQueryBuilder
+from primitives import logger
+from reports import inject
+from reports.injectors import SQLDb
 
 
 class ReportDataProvider(DataProvider):
@@ -24,7 +24,11 @@ class ReportDataProvider(DataProvider):
         c = db.cursor()
         logger.Logger.debug("Executing => {}".format(q_sql))
         c.execute(q_sql)
-        return c.fetchall()
+        data = c.fetchall()
+        res = []
+        for row in data:
+            res.append(tuple(map(str, row)))
+        return res
 
     def get_range_value(self, key):
         logger.Logger.debug("range for key => {}".format(key))
@@ -33,6 +37,3 @@ class ReportDataProvider(DataProvider):
     def get_value(self, key):
         logger.Logger.debug("value for key => {}".format(key))
         return self._report_data[key]
-
-
-

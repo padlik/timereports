@@ -26,19 +26,10 @@ class AbstractGrammar(object):
 
 
 class SimpleGrammar(AbstractGrammar):
-    __GRAMMAR = {'INIT': ['INIT', 'SELECT', 'TERM'],
-                 'SELECT': ['FROM'],
-                 'FROM': ['WHERE', 'TERM'],
-                 'WHERE': ['OP'],
-                 'OP': ['TERM', 'NON_TERM'],
-                 'NON_TERM': ['OP'],
-                 'TERM': []}
-    __ALIASES = {'INIT': [],
-                 'SELECT': ['select_'],
-                 'FROM': ['from_'],
-                 'WHERE': ['where_'],
-                 'OP': ['in_', 'gt_', 'lt_', 'eq_', 'neq_', 'bw_'],
-                 'NON_TERM': ['and_', 'or_'],
+    __GRAMMAR = {'INIT': ['INIT', 'SELECT', 'TERM'], 'SELECT': ['FROM'], 'FROM': ['WHERE', 'TERM'], 'WHERE': ['OP'],
+                 'OP': ['TERM', 'NON_TERM'], 'NON_TERM': ['OP'], 'TERM': []}
+    __ALIASES = {'INIT': [], 'SELECT': ['select_'], 'FROM': ['from_'], 'WHERE': ['where_'],
+                 'OP': ['in_', 'gt_', 'lt_', 'eq_', 'neq_', 'bw_'], 'NON_TERM': ['and_', 'or_'],
                  'TERM': ['exec_', 'end_']}
 
     @classmethod
@@ -110,7 +101,7 @@ class StateMachine(object):
         self._line = 0
 
     def add_listener(self, listener):
-        if not listener in self._listeners:
+        if listener not in self._listeners:
             self._listeners.append(listener)
 
     def remove_listener(self, listener):
@@ -135,7 +126,7 @@ class StateMachine(object):
 
     def enter_state(self, entering_state, ctx, args, kwargs):
         states = self._grammar.next_state(self._state)
-        if not entering_state in states:
+        if entering_state not in states:
             raise GrammarError("Invalid jump from %s to %s, %s expected" % (self._state, entering_state, states))
         self._state = entering_state
         self._notify(entering_state, ctx, args, kwargs)
