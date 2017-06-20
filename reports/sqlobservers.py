@@ -1,9 +1,9 @@
 #!/bin/env python
 
-from primitives.observer import BasicObserver
 import inject
 from injectors import SQLDb
-from primitives.logger import Logger
+from primitives import BasicObserver
+from primitives import Logger
 
 
 class CachingObserver(BasicObserver):
@@ -28,7 +28,7 @@ class UserListObserver(CachingObserver):
 
     def pre_load(self):
         Logger.debug("In UserList pre-load")
-        q_sql = "select sugar_uname, sugar_id from users"
+        q_sql = "SELECT sugar_uname, sugar_id FROM users WHERE dissmissed <> 'Y'"
         c = self._db.cursor()
         c.execute(q_sql)
         return dict(c.fetchall())
@@ -36,7 +36,7 @@ class UserListObserver(CachingObserver):
     def flush(self):
         if self._updated:
             Logger.debug("In UserList flush")
-            q_sql = "update users set sugar_id = %s where sugar_uname = %s"
+            q_sql = "UPDATE users SET sugar_id = %s WHERE sugar_uname = %s"
             c = self._db.cursor()
             q_params = [(v, k) for k, v in self._updated]
             Logger.debug("In UserList flush->params{}".format(q_params))
@@ -52,7 +52,7 @@ class TimesheetsObserver(CachingObserver):
         self._db = inject.instance(SQLDb)
 
     def _get_users(self):
-        q_sql = "select sugar_id, id from users"
+        q_sql = "SELECT sugar_id, id FROM users WHERE dissmissed <> 'Y'"
         c = self._db.cursor()
         c.execute(q_sql)
         return dict(c.fetchall())
@@ -65,9 +65,9 @@ class TimesheetsObserver(CachingObserver):
             fields = kwargs.get('fields',
                                 ['userid', 'created_by', 'activity_date', 'time_spent', 'description', 'id', 'name'])
             Logger.debug("Inside timesheets flush. Fields->{}".format(fields))
-            if not 'userid' in fields:
+            if 'userid' not in fields:
                 fields = ['userid'] + fields
-            q_sql = 'insert into timesheets( ' + ','.join(fields) + ') values (' + ','.join(
+            q_sql = 'INSERT INTO timesheets( ' + ','.join(fields) + ') VALUES (' + ','.join(
                 ['%s'] * (len(fields))) + ')'
             q_sql += ' ON DUPLICATE KEY UPDATE %s = VALUES(%s) ' % ('time_spent', 'time_spent')
             Logger.debug("Inside timesheets flush. Query->{}".format(q_sql))

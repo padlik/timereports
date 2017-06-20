@@ -4,25 +4,10 @@ import ConfigParser
 import argparse
 import collections
 
-
-CONFIG = {
-    "config": (
-        ('-c', '--config'),
-        {'required': True, 'help': "Credentials file"}
-    ),
-    "year": (
-        ('-y', '--year'),
-        {'type': int, 'default': '2014', 'help': "Year of the report"}
-    ),
-    "month": (
-        ('-m', '--month'),
-        {'type': int, 'default': '03', 'help': "Month of the report"}
-    ),
-    "debug": (
-        ('-d', '--debug'),
-        {'help': "Turn on debug output", 'action': 'store_true'}
-    )
-}
+CONFIG = {"config": (('-c', '--config'), {'required': True, 'help': "Credentials file"}),
+          "year": (('-y', '--year'), {'type': int, 'default': '2014', 'help': "Year of the report"}),
+          "month": (('-m', '--month'), {'type': int, 'default': '03', 'help': "Month of the report"}),
+          "debug": (('-d', '--debug'), {'help': "Turn on debug output", 'action': 'store_true'})}
 
 
 class ConfigException(Exception):
@@ -91,4 +76,3 @@ class AppParamsParser(BasicParamsParser):
                 # it's filthy...
                 sm[opt] = None
         return sm
-

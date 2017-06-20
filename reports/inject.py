@@ -216,8 +216,7 @@ class Injector(object):
                 return binding()
 
             if not callable(cls):
-                raise InjectorException(
-                    'Cannot create a runtime binding, the key is not callable, key=%s' % cls)
+                raise InjectorException('Cannot create a runtime binding, the key is not callable, key=%s' % cls)
 
             instance = cls()
             self._bindings[cls] = lambda: instance
