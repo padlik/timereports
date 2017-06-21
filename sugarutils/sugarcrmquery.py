@@ -2,11 +2,7 @@
 
 import functools
 
-from primitives import AbstractListener
-from primitives import ChainInterpreter
-from primitives import GrammarError
-from primitives import SimpleGrammar
-from primitives import StateMachine
+from sugarutils import AbstractListener, ChainInterpreter, GrammarError, SimpleGrammar, StateMachine
 
 
 class ChainSugarCrmQuery(AbstractListener):

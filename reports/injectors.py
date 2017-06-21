@@ -5,11 +5,3 @@
 
 class SQLDb(object):
     pass
-
-
-class SugarDb(object):
-    pass
-
-
-class Jira(object):
-    pass

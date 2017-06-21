@@ -1,9 +1,12 @@
 #!/bin/env python
 
+import logging
+
 import inject
 from injectors import SQLDb
 from primitives import BasicObserver
-from primitives import Logger
+
+logger = logging.getLogger(__name__)
 
 
 class CachingObserver(BasicObserver):
@@ -27,7 +30,7 @@ class UserListObserver(CachingObserver):
         self._db = inject.instance(SQLDb)
 
     def pre_load(self):
-        Logger.debug("In UserList pre-load")
+        logger.debug("In UserList pre-load")
         q_sql = "SELECT sugar_uname, sugar_id FROM users WHERE dissmissed <> 'Y'"
         c = self._db.cursor()
         c.execute(q_sql)
@@ -35,14 +38,14 @@ class UserListObserver(CachingObserver):
 
     def flush(self):
         if self._updated:
-            Logger.debug("In UserList flush")
+            logger.debug("In UserList flush")
             q_sql = "UPDATE users SET sugar_id = %s WHERE sugar_uname = %s"
             c = self._db.cursor()
             q_params = [(v, k) for k, v in self._updated]
-            Logger.debug("In UserList flush->params{}".format(q_params))
+            logger.debug("In UserList flush->params{}".format(q_params))
             c.executemany(q_sql, q_params)
             self._db.commit()
-            Logger.debug("Commit complete")
+            logger.debug("Commit complete")
             self._updated = []
 
 
@@ -59,25 +62,25 @@ class TimesheetsObserver(CachingObserver):
 
     def flush(self, *args, **kwargs):
         if self._updated:
-            Logger.debug("Inside timesheets flush")
+            logger.debug("Inside timesheets flush")
             users = self._get_users()
-            Logger.debug("Inside timesheets flush. Users->{}".format(users))
+            logger.debug("Inside timesheets flush. Users->{}".format(users))
             fields = kwargs.get('fields',
                                 ['userid', 'created_by', 'activity_date', 'time_spent', 'description', 'id', 'name'])
-            Logger.debug("Inside timesheets flush. Fields->{}".format(fields))
+            logger.debug("Inside timesheets flush. Fields->{}".format(fields))
             if 'userid' not in fields:
                 fields = ['userid'] + fields
             q_sql = 'INSERT INTO timesheets( ' + ','.join(fields) + ') VALUES (' + ','.join(
                 ['%s'] * (len(fields))) + ')'
             q_sql += ' ON DUPLICATE KEY UPDATE %s = VALUES(%s) ' % ('time_spent', 'time_spent')
-            Logger.debug("Inside timesheets flush. Query->{}".format(q_sql))
+            logger.debug("Inside timesheets flush. Query->{}".format(q_sql))
             c = self._db.cursor()
             values = []
             for uid, timesheets in self._updated:
                 for ts in timesheets:
                     values.append(([users[uid]] + [uid] + ts))
-            Logger.debug("Inside timesheets flush. Values->{}".format(values))
+            logger.debug("Inside timesheets flush. Values->{}".format(values))
             c.executemany(q_sql, values)
             self._db.commit()
-            Logger.debug("Commit complete")
+            logger.debug("Commit complete")
             self._updated = []

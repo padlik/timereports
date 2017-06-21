@@ -1,11 +1,13 @@
 #!/bin/env python
 
 
+import logging
+
 import gdata.gauth
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data
 
-from primitives import logger
+logger = logging.getLogger(__name__)
 from xlutils import range_dimension
 
 
@@ -58,29 +60,29 @@ class GSpreadSheet(object):
         self._client = gdata.spreadsheets.client.SpreadsheetsClient()
         self._token.authorize(self._client)
         self._token._refresh(self._client.http_client.request)
-        logger.Logger.debug("OAuth token has been refreshed {} ".format(self._token.access_token))
-        logger.Logger.debug("OAuth token expiration date is: {} ".format(self._token.token_expiry))
+        logger.debug("OAuth token has been refreshed {} ".format(self._token.access_token))
+        logger.debug("OAuth token expiration date is: {} ".format(self._token.token_expiry))
         self._worksheet_id = worksheet_id
         self._s_magic = gid2id(sheet).lower()
         self._w_entry = self._client.GetWorksheet(self._worksheet_id, self._s_magic)
         self.batch = None
-        logger.Logger.debug("Connected to SS")
+        logger.debug("Connected to SS")
 
     def _get_batch(self):
         if not self.batch:
             obj_data = gdata.spreadsheets.data
             self.batch = obj_data.BuildBatchCellsUpdate(self._worksheet_id, self._s_magic)
-            logger.Logger.debug("Batch created")
+            logger.debug("Batch created")
         return self.batch
 
     def flush(self):
         if self.batch:
             self._client.batch(self.batch, force=True)
-            logger.Logger.debug("Batch flushed")
+            logger.debug("Batch flushed")
             self.batch = None
 
     def set_cell(self, row, col, value):
-        logger.Logger.debug("set_cell {}:{}=>{}".format(row, col, value))
+        logger.debug("set_cell {}:{}=>{}".format(row, col, value))
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
         item.cell.input_value = str(value)
         self._get_batch().add_batch_entry(item, item.id.text, batch_id_string=item.title.text,
@@ -89,7 +91,7 @@ class GSpreadSheet(object):
 
     def get_cell(self, row, col):
         item = self._client.get_cell(self._worksheet_id, self._s_magic, row, col)
-        logger.Logger.debug("get_cell {}:{}=>{}".format(row, col, item.cell.input_value))
+        logger.debug("get_cell {}:{}=>{}".format(row, col, item.cell.input_value))
         return item.cell.input_value
 
     def get_range(self, srange):
@@ -105,11 +107,11 @@ class GSpreadSheet(object):
             rows += 1
             if not cells.entry[0 + rows * n_of_cols:n_of_cols + rows * n_of_cols]:
                 break
-        logger.Logger.debug("get_range {} => {}".format(srange, matrix))
+        logger.debug("get_range {} => {}".format(srange, matrix))
         return matrix
 
     def set_range(self, srange, matrix, clear_out=False):
-        logger.Logger.debug("set_range {} => {}".format(srange, matrix))
+        logger.debug("set_range {} => {}".format(srange, matrix))
         query = gdata.spreadsheets.client.CellQuery(range=srange, return_empty='true')
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         dim = range_dimension(srange)

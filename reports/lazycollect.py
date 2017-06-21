@@ -1,27 +1,28 @@
 #!/bin/env python
 
 import calendar
+import logging
 
-import inject
-from injectors import SugarDb
+from extsources import SugarSource
 from primitives import LazyDict
-from primitives import Logger
-from sugarcrmquery import ChainSugarCrmQuery
+from sugarutils.sugarcrmquery import ChainSugarCrmQuery
+
+logger = logging.getLogger(__name__)
 
 
 class UserLazyList(LazyDict):
     def __batch_update__(self, items):
-        db = inject.instance(SugarDb)
+        db = SugarSource.instance
         qry = ChainSugarCrmQuery(db)
-        Logger.debug('Users list: Users->{}'.format(items.keys()))
-        Logger.debug('Users list: fields->{} '.format(['user_name', 'id']))
+        logger.debug('Users list: Users->{}'.format(items.keys()))
+        logger.debug('Users list: fields->{} '.format(['user_name', 'id']))
         qry.cursor().select_(['user_name', 'id']).from_('Users').where_().in_('users.user_name', items.keys(),
                                                                               esq=True).end_()
         r_dict = {}
         for h in qry.fetch_all():
             r_dict = {k: v for k, v in h}
-        Logger.debug('Users list: Returned->#{}'.format(len(r_dict)))
-        Logger.debug('Users list: Output:->{}'.format(r_dict))
+        logger.debug('Users list: Returned->#{}'.format(len(r_dict)))
+        logger.debug('Users list: Output:->{}'.format(r_dict))
         return r_dict
 
 
@@ -60,14 +61,14 @@ class TimesheetsLazyList(LazyDict):
     def __batch_update__(self, items):
         keys = [key for key, value in items.iteritems() if value != []]  # special case for uniformity
         if keys:
-            Logger.debug('TS List: Keys to update->#{}'.format(keys))
-            db = inject.instance(SugarDb)
+            logger.debug('TS List: Keys to update->#{}'.format(keys))
+            db = SugarSource.instance
             qry = ChainSugarCrmQuery(db)
             dates = self.__get_dates()
-            Logger.debug('TS List: Dates to fetch->{}'.format(dates))
-            Logger.debug('TS List: Query params->fields:{}'.format(self._fields))
-            Logger.debug('TS List: Query params->created_by:{}'.format(keys))
-            Logger.debug('TS List: Query params->activity date between:{}'.format(dates))
+            logger.debug('TS List: Dates to fetch->{}'.format(dates))
+            logger.debug('TS List: Query params->fields:{}'.format(self._fields))
+            logger.debug('TS List: Query params->created_by:{}'.format(keys))
+            logger.debug('TS List: Query params->activity date between:{}'.format(dates))
             qry.cursor().select_(self._fields).from_('ps_Timesheets').where_().in_('ps_timesheets.created_by', keys,
                                                                                    esq=True).and_().bw_(
                 'ps_timesheets.activity_date', dates, esq=True).end_()
@@ -76,8 +77,8 @@ class TimesheetsLazyList(LazyDict):
             for entries in qry.fetch_all():
                 for entry in entries:
                     ts[entry[0]].append(entry[1:])
-            Logger.debug('TS List: Query returned->{}'.format(ts))
+            logger.debug('TS List: Query returned->{}'.format(ts))
             return ts
         else:
-            Logger.debug('TS List: No items to update, passing')
+            logger.debug('TS List: No items to update, passing')
             return items
