@@ -3,10 +3,11 @@
 import datetime
 import logging
 
+from sqlalchemy import text
+
+from datasources import SQLDataSource
 from gdreport import DataProvider
 from gdsqlbuilder import GDQueryBuilder
-from reports import inject
-from reports.injectors import SQLDb
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +21,15 @@ class ReportDataProvider(DataProvider):
 
     @staticmethod
     def _load_data(year, month):
-        db = inject.instance(SQLDb)
-        builder = GDQueryBuilder(year=year, month=month)
-        q_sql = builder.query
-        c = db.cursor()
-        logger.debug("Executing => {}".format(q_sql))
-        c.execute(q_sql)
-        data = c.fetchall()
+        mysql = SQLDataSource.instance
+        q = text(GDQueryBuilder(year=year, month=month).query)
+        logger.debug("Summary query is {}".format(q))
+        summary = mysql.execute(q)
         res = []
-        for row in data:
+        # Conversion to string is required as google docs cannot convert floats properly
+        for row in summary:
             res.append(tuple(map(str, row)))
+        logger.debug("Rows returned {}".format(res))
         return res
 
     def get_range_value(self, key):

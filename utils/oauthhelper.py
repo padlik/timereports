@@ -3,14 +3,11 @@ import gdata.gauth
 
 import reports.inject
 from reports.injectors import SQLDb
-from utils.paramsparser import BasicParamsParser
+from decouple import config
+
 
 SCOPE = 'https://spreadsheets.google.com/feeds/'
 
-CONFIG = {"host": (('-h', '--host'), {'required': True, 'help': "DB host"}),
-          "user": (('-u', '--user'), {'required': True, 'help': "DB user"}),
-          "password": (('-p', '--password'), {'required': True, 'help': "DB password"}),
-          "db": (('-d', '--db'), {'required': True, 'help': "schema name"})}
 
 
 def refresh_tokens(params):
@@ -43,13 +40,12 @@ def set_oauth_params(data):
 
 
 if __name__ == '__main__':
-    import sys
     import MySQLdb
 
-    cmd_params = sys.argv[1:]
-    config = BasicParamsParser(caption=sys.argv[0], config=CONFIG, need_help=False)
-    config.parse(cmd_params)
-    mysql_conf = {'user': config['user'], 'passwd': config['password'], 'db': config['db'], 'host': config['host'],
+    mysql_conf = {'user': config('MYSQL_USER'),
+                  'passwd': config('MYSQL_PASS'),
+                  'db': config('MYSQL_DB'),
+                  'host': config('MYSQL_HOST'),
                   'charset': 'utf8'}
     sqldb = MySQLdb.connect(**mysql_conf)
 

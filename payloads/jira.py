@@ -2,22 +2,20 @@
 import logging
 from multiprocessing.dummy import Pool
 
-from extsources import JiraSource
-from payloads.payload import Payload
+from datasources import JiraSource
 from reports import inject
 from reports.injectors import SQLDb
 
 logger = logging.getLogger(__name__)
 
 
-class JiraPayload(Payload):
+class JiraPayload(object):
     def __init__(self, year=2017, month=3, threads=5):
         super(JiraPayload, self).__init__()
         self.users = self.__get_users()
         self.year = year
         self.month = month
         self.threads = threads
-        self.jira = JiraSource.instance
 
     def __thread_worker(self, user):
         """
@@ -52,30 +50,30 @@ class JiraPayload(Payload):
             simple_date = datetime.datetime(year=complex_date.year, month=complex_date.month, day=complex_date.day)
             return simple_date
 
-        jira = self.jira
+        jira = JiraSource.instance
         start_date, finish_date = get_dates()
         logger.debug("Querying from {} to {}".format(start_date, finish_date))
         qry = 'key in workedIssues("{start}", "{finish}", "{user}")'.format(start=start_date.strftime("%Y/%m/%d"),
                                                                             finish=finish_date.strftime("%Y/%m/%d"),
                                                                             user=user)
         logger.debug("Query is {}".format(qry))
+        ts = []
         try:
             issues = jira.search_issues(jql_str=qry, maxResults=1000)
+            for i in issues:
+                logger.debug("Issues found {}".format(user))
+                for w in [w for w in jira.worklogs(i.key) if w.author.name == user]:
+                    d_created = jdate2pydate(w.started)
+                    logger.debug("Worklog date for {} is {}".format(user, d_created))
+                    if start_date <= d_created <= finish_date:  # it might happens too!
+                        logger.debug("We are in the time frame {} {} {}".format(user, start_date, finish_date))
+                        ts.append([w.id, w.comment, float(w.timeSpentSeconds) / 3600, d_created])
+            logger.debug("Timesheets for user {} are {}".format(user, ts))
+            logger.info("Finishing worker for user: {} ({} timeseets)".format(user, len(ts)))
         except Exception as e:
             logger.error("Error getting data form JIRA: {}".format(e.message))
             logger.warn("Thread will continue though with empty set for a user {}".format(user))
-            return {user: []}
-        ts = []
-        for i in issues:
-            logger.debug("Issues found {}".format(user))
-            for w in [w for w in jira.worklogs(i.key) if w.author.name == user]:
-                d_created = jdate2pydate(w.started)
-                logger.debug("Worklog date for {} is {}".format(user, d_created))
-                if start_date <= d_created <= finish_date:  # it might happens too!
-                    logger.debug("We are in the time frame {} {} {}".format(user, start_date, finish_date))
-                    ts.append([w.id, w.comment, float(w.timeSpentSeconds) / 3600, d_created])
-        logger.debug("Timesheets for user {} are {}".format(user, ts))
-        logger.info("Finishing worker for user: {} ({} timeseets)".format(user, len(ts)))
+            ts = []
         return {user: ts}
 
     def __set_timesheets(self, ts):
@@ -127,5 +125,5 @@ class JiraPayload(Payload):
         self.__set_timesheets(timesheets)
         logger.info("Jira timesheets are uploaded")
 
-    def __str__(self):
+    def __repr__(self):
         return self.__class__.__name__

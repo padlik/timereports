@@ -6,7 +6,8 @@ import time
 
 from decouple import config
 
-from extsources import connect_config
+
+from datasources import SQLDataSource, mysql_creator
 from payloads import JiraPayload, SugarPayload, GooglePayload
 
 logger = logging.getLogger(__name__)
@@ -74,21 +75,32 @@ def config_injectors():
     logger.info("")
 
 
+def init_logging():
+    log_level = logging.DEBUG if config('DEBUG', cast=bool) else logging.INFO
+    logging.basicConfig(level=logging.INFO,
+                        format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+                        datefmt="%H:%M:%S")
+    if log_level == logging.DEBUG:
+        logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 if __name__ == "__main__":
-    if config('DEBUG', cast=bool):
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
+
+    init_logging()
+
     stopFlag = threading.Event()
     stopFlag.set()
-    connect_config(config)
+
+    # configure ORM with MySQL
+    SQLDataSource.set_creator(mysql_creator)
+    # TO_DO Deprecate this!
     config_injectors()
     sugar_payload = SugarPayload(config('REPO_YEAR', cast=int, default=2017), config('REPO_MONTH', cast=int, default=4))
     jira_payload = JiraPayload(config('REPO_YEAR', cast=int, default=2017), config('REPO_MONTH', cast=int, default=4),
                                config('JIRA_THREADS', cast=int))
     google_payload = GooglePayload(config('GOOGLE_SHEET'), config('REPO_YEAR', cast=int, default=2017),
                                    config('REPO_MONTH', cast=int, default=4))
-    thread = RunThread(stopFlag, [sugar_payload, jira_payload, google_payload])
+    #thread = RunThread(stopFlag, [sugar_payload, jira_payload, google_payload])
+    thread = RunThread(stopFlag, [google_payload])
     thread.start()
 
 
@@ -104,7 +116,7 @@ if __name__ == "__main__":
         while 1:
             time.sleep(.1)
     except KeyboardInterrupt:
-        logger.warn("About to exit")
+        logger.warn("Keyboard Interrupt: Gracefully stopping. Please wait...")
         stopFlag.clear()
         thread.join()
         sys.exit(0)

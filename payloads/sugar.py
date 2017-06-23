@@ -1,7 +1,6 @@
 #!/bin/env python
 import logging
 
-from payloads.payload import Payload
 from primitives.observer import Dispatcher
 from reports import lazycollect
 from reports import sqlobservers
@@ -9,7 +8,7 @@ from reports import sqlobservers
 logger = logging.getLogger(__name__)
 
 
-class SugarPayload(Payload):
+class SugarPayload(object):
     def __init__(self, year=2017, month=2):
         super(SugarPayload, self).__init__()
         self.dispatcher = Dispatcher()
@@ -58,5 +57,5 @@ class SugarPayload(Payload):
             o.flush()
         self.collectors[1].clear()
 
-    def __str__(self):
+    def __repr__(self):
         return self.__class__.__name__

@@ -1,21 +1,18 @@
 #!/bin/env python
-
 import logging
 
 from docutils import ReportTemplate, ReportBuilder, TEMPLATE, GDSpreadsheetProvider, ReportDataProvider
-from payload import Payload
 
 logger = logging.getLogger(__name__)
 
 
-class GooglePayload(Payload):
+class GooglePayload(object):
     def __init__(self, sheet, year, month):
         """
 
         :type sheet: google spreadsheet string
         """
-        super(GooglePayload, self).__init__()
-        logger.info("Init Google spreadsheet export")
+        logger.info("Init Google spreadsheet export month: {}={}".format(year, month))
         self.year = year
         self.month = month
         self.sheet = sheet
@@ -32,5 +29,5 @@ class GooglePayload(Payload):
             self.builder.execute()
         logger.info("Export to google spreadsheet complete")
 
-    def __str__(self):
+    def __repr__(self):
         return self.__class__.__name__

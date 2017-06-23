@@ -3,7 +3,7 @@
 import calendar
 import logging
 
-from extsources import SugarSource
+from datasources import SugarSource
 from primitives import LazyDict
 from sugarutils.sugarcrmquery import ChainSugarCrmQuery
 
