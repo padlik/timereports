@@ -6,9 +6,8 @@ import time
 
 from decouple import config
 
-
 from datasources import SQLDataSource, mysql_creator
-from payloads import JiraPayload, SugarPayload, GooglePayload
+from payloads import JiraPayload, SugarPayload2, GooglePayload
 
 logger = logging.getLogger(__name__)
 
@@ -23,18 +22,27 @@ class RunThread(threading.Thread):
         logger.info("About to start working thread")
         self.stopped = event
         self.payloads = payloads
+        self._attempts = 0
 
     def run(self):
         logger.info("Entering running function")
+        attempts = 0
+        uptime = time.time()
         while self.stopped.is_set():
             logger.info("Worker thread wake up call")
+            attempts += 1
+            logger.info("Iteration #{} uptime: {} sec.".format(attempts, time.time() - uptime))
             if self.payloads:
                 for p in self.payloads:
                     start_time = time.time()
                     logger.info("Starting payload {}".format(str(p)))
                     if self.stopped.is_set():
-                        p.payload()
-                        logger.info("Payload finished in : {} seconds".format(time.time() - start_time))
+                        try:
+                            p.payload()
+                            logger.info("Payload finished in : {} seconds".format(time.time() - start_time))
+                        except Exception as e:
+                            logger.warn('Exception in Payload {}:{}'.format(p, e.message))
+                            logger.warn('Trying to continue to the next Payload')
                     else:
                         logger.info("Stop signal received. Stopping gracefully...")
             else:
@@ -50,31 +58,6 @@ class RunThread(threading.Thread):
                         break
 
 
-def config_injectors():
-    from reports import inject
-    from reports.injectors import SQLDb
-    import MySQLdb
-
-    mysql_user = config('MYSQL_USER')
-    mysql_pass = config('MYSQL_PASS')
-    mysql_host = config('MYSQL_HOST')
-    mysql_port = config('MYSQL_PORT', default=3306, cast=int)
-    mysql_charset = config('MYSQL_CHARSET', default='utf8')
-    mysql_db = config('MYSQL_DB')
-
-    logger.info("Injecting MYSQL connection {}@{}:{}/{}".format(mysql_user, mysql_host, mysql_port, mysql_db))
-    logger.info("MYSQL-Encoding: {}".format(mysql_charset))
-    sqldb = MySQLdb.connect(user=mysql_user, host=mysql_host, port=mysql_port, db=mysql_db, charset=mysql_charset,
-                            passwd=mysql_pass)
-
-    def injector_config(binder):
-        binder.bind(SQLDb, sqldb)
-
-    inject.configure(injector_config)
-    logger.info("Injection actions are completed")
-    logger.info("")
-
-
 def init_logging():
     log_level = logging.DEBUG if config('DEBUG', cast=bool) else logging.INFO
     logging.basicConfig(level=logging.INFO,
@@ -82,6 +65,7 @@ def init_logging():
                         datefmt="%H:%M:%S")
     if log_level == logging.DEBUG:
         logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 
 if __name__ == "__main__":
 
@@ -92,15 +76,16 @@ if __name__ == "__main__":
 
     # configure ORM with MySQL
     SQLDataSource.set_creator(mysql_creator)
-    # TO_DO Deprecate this!
-    config_injectors()
-    sugar_payload = SugarPayload(config('REPO_YEAR', cast=int, default=2017), config('REPO_MONTH', cast=int, default=4))
+
+    sugar_payload = SugarPayload2(config('REPO_YEAR', cast=int, default=2017),
+                                  config('REPO_MONTH', cast=int, default=4))
     jira_payload = JiraPayload(config('REPO_YEAR', cast=int, default=2017), config('REPO_MONTH', cast=int, default=4),
                                config('JIRA_THREADS', cast=int))
     google_payload = GooglePayload(config('GOOGLE_SHEET'), config('REPO_YEAR', cast=int, default=2017),
                                    config('REPO_MONTH', cast=int, default=4))
-    #thread = RunThread(stopFlag, [sugar_payload, jira_payload, google_payload])
-    thread = RunThread(stopFlag, [google_payload])
+    thread = RunThread(stopFlag, [sugar_payload, jira_payload, google_payload])
+    # thread = RunThread(stopFlag, [google_payload])
+    # thread = RunThread(stopFlag, [sugar_payload])
     thread.start()
 
 

@@ -9,9 +9,12 @@ logger = logging.getLogger(__name__)
 class GooglePayload(object):
     def __init__(self, sheet, year, month):
         """
-
-        :type sheet: google spreadsheet string
+        Init Google reporting object
+        :param sheet: Spreadsheet code (copy form google)
+        :param year: Year of the report
+        :param month: Month of the report
         """
+
         logger.info("Init Google spreadsheet export month: {}={}".format(year, month))
         self.year = year
         self.month = month

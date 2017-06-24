@@ -30,7 +30,8 @@ class TimeSheet(Base):
 
     def __repr__(self):
         return "Key: {}, UserId: {}, Time_Spent: {}, Description: {}, " \
-               "Activity_Date: {}, Id: {}, Created_By: {}, Name: {}, Source: {}".format(self.key, self.time_spent,
+               "Activity_Date: {}, Id: {}, Created_By: {}, Name: {}, Source: {}".format(self.key, self.userid,
+                                                                                        self.time_spent,
                                                                                         self.description,
                                                                                         self.activity_date, self.id,
                                                                                         self.created_by, self.name,

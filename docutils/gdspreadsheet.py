@@ -7,8 +7,9 @@ import gdata.gauth
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data
 
-logger = logging.getLogger(__name__)
 from xlutils import range_dimension
+
+logger = logging.getLogger(__name__)
 
 
 class GSpreadSheetError(Exception):

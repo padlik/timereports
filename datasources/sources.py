@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class DataSource(object):
+    """
+    Semi-singleton data source object protected with Mutex for thread safety
+    """
     __mutex__ = Lock()
 
     def __init__(self):
@@ -20,6 +23,10 @@ class DataSource(object):
 
     @property
     def instance(self):
+        """
+        Returns instance of creates a new one
+        :return: DataSource instance
+        """
         self.__mutex__.acquire()
         try:
             if self._instance is None:
@@ -29,6 +36,10 @@ class DataSource(object):
             self.__mutex__.release()
 
     def init_instance(self):
+        """
+        Abstract method for creating DataSource instance
+        :return: New DataSource instance object
+        """
         pass
 
 
@@ -57,14 +68,23 @@ class DefaultSQLDataSource(DataSource):
     def init_instance(self):
         logger.info("Configuring ORM for {}".format(config('DB_ENGINE')))
         db = create_engine(config('DB_ENGINE') + "://", creator=self._creator)
-        maker = sessionmaker(bind=db)
+        maker = sessionmaker(bind=db, autoflush=False)
         return maker()
 
     def set_creator(self, func):
+        """
+        Bind creator function (sqlalchemy specific) to create DB connection
+        :param func:
+        :return:
+        """
         self._creator = func
 
 
 def mysql_creator():
+    """
+    Default MYSQL creator function for DefaultSQLDataSource
+    :return: function
+    """
     mysql_user = config('MYSQL_USER')
     mysql_pass = config('MYSQL_PASS')
     mysql_host = config('MYSQL_HOST')
@@ -81,4 +101,3 @@ def mysql_creator():
 JiraSource = DefaultJiraSource()
 SugarSource = DefaultSugarSource()
 SQLDataSource = DefaultSQLDataSource()
-
