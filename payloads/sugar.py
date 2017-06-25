@@ -8,14 +8,15 @@ from datasources import SQLDataSource, SugarSource
 from serializers import User, TimeSheet
 from sugarutils import ChainSugarCrmQuery
 from utils import make_month_range
+from decouple import config
 
 logger = logging.getLogger(__name__)
 
 
 class SugarPayload2(object):
-    def __init__(self, year=2017, month=2):
-        self.year = year
-        self.month = month
+    def __init__(self):
+        self.year = config('REPO_YEAR', cast=int, default=2017)
+        self.month = config('REPO_MONTH', cast=int, default=4)
 
     @staticmethod
     def check_users_sugarid(check_dismissed=False):

@@ -6,16 +6,17 @@ from datasources import JiraSource
 from datasources import SQLDataSource
 from serializers import TimeSheet, User
 from utils import make_month_range, jdate2pydate
+from decouple import config
 
 logger = logging.getLogger(__name__)
 
 
 class JiraPayload(object):
-    def __init__(self, year=2017, month=3, threads=5):
+    def __init__(self):
         self.users = self.__get_users()
-        self.year = year
-        self.month = month
-        self.threads = threads
+        self.year = config('REPO_YEAR', cast=int, default=2017)
+        self.month = config('REPO_MONTH', cast=int, default=4)
+        self.threads = config('JIRA_THREADS', cast=int, default=4)
 
     def __thread_worker(self, user):
         """

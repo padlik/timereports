@@ -77,12 +77,10 @@ if __name__ == "__main__":
     # configure ORM with MySQL
     SQLDataSource.set_creator(mysql_creator)
 
-    sugar_payload = SugarPayload2(config('REPO_YEAR', cast=int, default=2017),
-                                  config('REPO_MONTH', cast=int, default=4))
-    jira_payload = JiraPayload(config('REPO_YEAR', cast=int, default=2017), config('REPO_MONTH', cast=int, default=4),
-                               config('JIRA_THREADS', cast=int))
-    google_payload = GooglePayload(config('GOOGLE_SHEET'), config('REPO_YEAR', cast=int, default=2017),
-                                   config('REPO_MONTH', cast=int, default=4))
+    sugar_payload = SugarPayload2()
+    jira_payload = JiraPayload()
+    google_payload = GooglePayload()
+
     thread = RunThread(stopFlag, [sugar_payload, jira_payload, google_payload])
     # thread = RunThread(stopFlag, [google_payload])
     # thread = RunThread(stopFlag, [sugar_payload])
