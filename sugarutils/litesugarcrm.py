@@ -2,10 +2,11 @@
 
 import hashlib
 import json
+import logging
 import urllib2
 from urllib import urlencode
 
-from primitives import Logger
+logger = logging.getLogger(__name__)
 
 
 class LiteSugarCRM(object):
@@ -18,9 +19,9 @@ class LiteSugarCRM(object):
         params = urlencode(args)
         response = urllib2.urlopen(self._rest, params)
         response = response.read()
-        Logger.debug("Raw response is {} ".format(response))
+        logger.debug("Raw response is {} ".format(response))
         result = json.loads(response)
-        Logger.debug("Raw result is {} ".format(result))
+        logger.debug("Raw result is {} ".format(result))
         return result
 
     def execute(self, method, *args):

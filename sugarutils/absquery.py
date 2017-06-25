@@ -7,25 +7,7 @@ class GrammarError(Exception):
     pass
 
 
-class AbstractGrammar(object):
-    @classmethod
-    def init_state(cls):
-        pass
-
-    @classmethod
-    def next_state(cls, state):
-        pass
-
-    @classmethod
-    def states(cls):
-        pass
-
-    @classmethod
-    def get_alias(cls, state):
-        pass
-
-
-class SimpleGrammar(AbstractGrammar):
+class SemiSQLGrammar(object):
     __GRAMMAR = {'INIT': ['INIT', 'SELECT', 'TERM'], 'SELECT': ['FROM'], 'FROM': ['WHERE', 'TERM'], 'WHERE': ['OP'],
                  'OP': ['TERM', 'NON_TERM'], 'NON_TERM': ['OP'], 'TERM': []}
     __ALIASES = {'INIT': [], 'SELECT': ['select_'], 'FROM': ['from_'], 'WHERE': ['where_'],
@@ -177,7 +159,7 @@ class StackListener(AbstractListener):
 
 
 if __name__ == "__main__":
-    machine = StateMachine.machine(SimpleGrammar)
+    machine = StateMachine.machine(SemiSQLGrammar)
     lsnr = StackListener()
     machine.add_listener(lsnr)
     inter = ChainInterpreter.interpreter(machine)

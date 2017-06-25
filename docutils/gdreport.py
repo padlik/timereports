@@ -33,7 +33,7 @@ class ReportTemplate(collections.MutableMapping):
         def __init__(self, name, init_range, **kwargs):
             super(ReportTemplate.Range, self).__init__(name, init_range)
             self._dynamic = kwargs.get('dynamic')
-            if self._dynamic and  self._dynamic not in ['rows', 'cols']:
+            if self._dynamic and self._dynamic not in ['rows', 'cols']:
                 raise GDReportError('Dynamic attribute should be in %s' % str(['rows', 'cols']))
 
         @property
