@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 class ReportDataProvider(DataProvider):
     def __init__(self, year, month, targets):
         self._report_data = {'minsk_target': targets[0], 'ua_target': targets[1],
-                             'update_date': datetime.date.today().strftime('%d, %b %Y'),
-                             'update_time': datetime.datetime.today().time().strftime('%H:%M'),
+                             'update_date': datetime.datetime.utcnow().strftime('%d, %b %Y'),
+                             'update_time': datetime.datetime.utcnow().time().strftime('%H:%M'),
                              'hour_report': self._load_data(year, month)}
 
     @staticmethod

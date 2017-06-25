@@ -13,17 +13,19 @@ logger = logging.getLogger(__name__)
 
 class JiraPayload(object):
     def __init__(self):
-        self.users = self.__get_users()
+        self.users = self._get_users()
         self.year = config('REPO_YEAR', cast=int, default=2017)
         self.month = config('REPO_MONTH', cast=int, default=4)
         self.threads = config('JIRA_THREADS', cast=int, default=4)
 
-    def __thread_worker(self, user):
+    def _thread_worker(self, user):
         """
         Thread worker function against JIRA
         :param user: jira user name for timesheets retrieval
         :return: Dict {user_name: [array of timesheets]}
         """
+
+        # TO_DO exclude empty timesheets from being removed
 
         jira = JiraSource.instance
         start_date, finish_date = make_month_range(self.year, self.month)
@@ -47,11 +49,11 @@ class JiraPayload(object):
             logger.info("Finishing worker for user: {} ({} timesheets)".format(user, len(ts)))
         except Exception as e:
             logger.error("Error getting data form JIRA: {}".format(e))
-            logger.warn("Thread will continue though with empty set for a user {}".format(user))
+            logger.warn("Data for User -># {} #<- will NOT be updated ".format(user))
             ts = []
         return {user: ts}
 
-    def __set_timesheets(self, ts):
+    def _set_timesheets(self, ts):
         """
         Writes data to the date to database
         :param ts: timesheets for a user
@@ -79,7 +81,7 @@ class JiraPayload(object):
         finally:
             mysql.rollback()
 
-    def __get_users(self):
+    def _get_users(self):
         """
         List of active users to build report for
         :return: Dict of {user_name: id} from database
@@ -100,7 +102,7 @@ class JiraPayload(object):
         logger.info("Jira max threads is set to: {}".format(self.threads))
         pool = Pool(self.threads)
         logger.info("Spreading threads")
-        results = pool.map(self.__thread_worker, self.users)
+        results = pool.map(self._thread_worker, self.users)
         pool.close()
         pool.join()
         logger.info("All threads are finished. Preparing summary")
@@ -108,12 +110,13 @@ class JiraPayload(object):
         overall = 0.0
         for r in results:
             for u, ts in r.iteritems():
-                overall += sum([t[2] for t in ts])
-                logger.debug("{}->{} hrs".format(u, sum([t[2] for t in ts]) / 3600))
+                sum_ts = sum([t[2] for t in ts])
+                overall += sum_ts
+                logger.info("{}->{} hrs".format(u, sum_ts))
                 logger.debug("User: {} and timesheet {}".format(self.users[u], ts))
                 for t in ts:
                     timesheets.append([self.users[u]] + t + ['JIRA'])
-        self.__set_timesheets(timesheets)
+        self._set_timesheets(timesheets)
         logger.info("Jira timesheets are uploaded: {} hrs".format(overall))
         return overall
 

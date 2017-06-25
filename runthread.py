@@ -12,7 +12,7 @@ from payloads import JiraPayload, SugarPayload2, GooglePayload
 logger = logging.getLogger(__name__)
 
 __INTERVAL__ = config('RUN_INTERVAL', default=300, cast=int)
-
+__PAYLOADS__ = [SugarPayload2, JiraPayload, GooglePayload] # Payload order is important
 
 class RunThread(threading.Thread):
     def __init__(self, event, payloads=None):
@@ -50,9 +50,7 @@ class RunThread(threading.Thread):
 
             if self.stopped.is_set():
                 logger.info("Worker thread asleep for {} seconds".format(__INTERVAL__))
-                n = int(round(float(__INTERVAL__) / float(10)))
-                for n in reversed(xrange(n)):
-                    logger.info("Restart in {} seconds".format(n * 10))
+                for _ in reversed(xrange(int(round(float(__INTERVAL__) / float(10))))):
                     time.sleep(10)
                     if not self.stopped.is_set():
                         break
@@ -77,11 +75,17 @@ if __name__ == "__main__":
     # configure ORM with MySQL
     SQLDataSource.set_creator(mysql_creator)
 
-    sugar_payload = SugarPayload2()
-    jira_payload = JiraPayload()
-    google_payload = GooglePayload()
+    # Init all payloads
+    payloads_init = []
+    for payload in __PAYLOADS__:
+        p = payload()
+        payloads_init.append(p)
 
-    thread = RunThread(stopFlag, [sugar_payload, jira_payload, google_payload])
+    # sugar_payload = SugarPayload2()
+    # jira_payload = JiraPayload()
+    # google_payload = GooglePayload()
+
+    thread = RunThread(stopFlag, payloads_init)
     # thread = RunThread(stopFlag, [google_payload])
     # thread = RunThread(stopFlag, [sugar_payload])
     thread.start()
