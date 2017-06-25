@@ -1,10 +1,10 @@
 #!/bin/env python#
 
 import xlutils
+from datasources import SQLDataSource
 from gdreport import SpreadsheetProvider
 from gdspreadsheet import GSpreadSheet
-from reports import inject
-from reports.injectors import SQLDb
+from serializers import OAuthData
 
 
 class GDSpreadsheetProvider(SpreadsheetProvider):
@@ -13,11 +13,8 @@ class GDSpreadsheetProvider(SpreadsheetProvider):
 
     @staticmethod
     def __init_provider(ssid):
-        db = inject.instance(SQLDb)
-        s_sql = 'SELECT param, value FROM oauthdata'
-        c = db.cursor()
-        c.execute(s_sql)
-        params = {p: v for p, v in c.fetchall()}
+        mysql = SQLDataSource.instance
+        params = {o.param: o.value for o in mysql.query(OAuthData.param, OAuthData.value).all()}
         return GSpreadSheet(ssid, params)
 
     def set_cell(self, cell_range, value):

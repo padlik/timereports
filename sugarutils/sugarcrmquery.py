@@ -2,11 +2,7 @@
 
 import functools
 
-from primitives import AbstractListener
-from primitives import ChainInterpreter
-from primitives import GrammarError
-from primitives import SimpleGrammar
-from primitives import StateMachine
+from sugarutils import AbstractListener, ChainInterpreter, GrammarError, SemiSQLGrammar, StateMachine
 
 
 class ChainSugarCrmQuery(AbstractListener):
@@ -100,7 +96,7 @@ class ChainSugarCrmQuery(AbstractListener):
             return _state_events[frame.cmd](stmt, frame)
 
     def __init__(self, connection):
-        self._machine = StateMachine.machine(SimpleGrammar)
+        self._machine = StateMachine.machine(SemiSQLGrammar)
         self._machine.add_listener(self)
         self._inter = ChainInterpreter.interpreter(self._machine)
         self._conn = connection

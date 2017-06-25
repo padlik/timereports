@@ -1,32 +1,34 @@
 #!/bin/env python
+import logging
 
-from gdsupport import ReportTemplate, ReportBuilder, TEMPLATE, GDSpreadsheetProvider, ReportDataProvider
-from primitives import Payload, Logger
+from docutils import ReportTemplate, ReportBuilder, TEMPLATE, GDSpreadsheetProvider, ReportDataProvider
+from decouple import config
+
+logger = logging.getLogger(__name__)
 
 
-class GooglePayload(Payload):
-    def __init__(self, sheet, year, month):
+class GooglePayload(object):
+    def __init__(self):
+        """
+        Init Google reporting object
         """
 
-        :type sheet: google spreadsheet string
-        """
-        super(GooglePayload, self).__init__()
-        Logger.info("Init Google spreadsheet export")
-        self.year = year
-        self.month = month
-        self.sheet = sheet
+        self.year = config('REPO_YEAR', cast=int, default=2017)
+        self.month = config('REPO_MONTH', cast=int, default=4)
+        self.sheet = config('GOOGLE_SHEET')
         self.report = ReportTemplate()
         self.builder = ReportBuilder()
         self.report.template = TEMPLATE
         self.builder.template = self.report
         self.builder.datasource = ReportDataProvider(self.year, self.month, (160, 160))
+        logger.info("Init Google spreadsheet export month: {}={}".format(self.year, self.month))
 
     def payload(self):
-        Logger.info("Starting Google spreadsheet export for {}-{}".format(self.year, self.month))
+        logger.info("Starting Google spreadsheet export for {}-{}".format(self.year, self.month))
         with GDSpreadsheetProvider(self.sheet) as ssheet:
             self.builder.spreadsheet = ssheet
             self.builder.execute()
-        Logger.info("Export to google spreadsheet complete")
+        logger.info("Export to google spreadsheet complete")
 
-    def __str__(self):
+    def __repr__(self):
         return self.__class__.__name__
