@@ -12,7 +12,8 @@ from payloads import JiraPayload, SugarPayload2, GooglePayload
 logger = logging.getLogger(__name__)
 
 __INTERVAL__ = config('RUN_INTERVAL', default=300, cast=int)
-__PAYLOADS__ = [SugarPayload2, JiraPayload, GooglePayload] # Payload order is important
+__PAYLOADS__ = [SugarPayload2, JiraPayload, GooglePayload]  # Payload order is important
+
 
 class RunThread(threading.Thread):
     def __init__(self, event, payloads=None):
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     thread.start()
 
 
-    def sigterm_handler(signum, frame):
+    def sigterm_handler(signum, _):
         logger.warn("SIGTERM caught ({}), stopping...".format(signum))
         stopFlag.clear()
         raise KeyboardInterrupt
