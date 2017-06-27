@@ -61,3 +61,4 @@ class User(Base):
                                                                               self.intetics_uname, self.location,
                                                                               self.dissmissed, self.team,
                                                                               self.full_name)
+

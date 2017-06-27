@@ -3,11 +3,9 @@
 import datetime
 import logging
 
-from sqlalchemy import text
-
 from datasources import SQLDataSource
 from gdreport import DataProvider
-from gdsqlbuilder import GDQueryBuilder
+from gdsqlbuilder import GDORMQueryBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +20,10 @@ class ReportDataProvider(DataProvider):
     @staticmethod
     def _load_data(year, month):
         mysql = SQLDataSource.instance
-        q = text(GDQueryBuilder(year=year, month=month).query)
+        # q = text(GDQueryBuilder(year=year, month=month).query)
+        q = GDORMQueryBuilder(mysql, year, month).query
         logger.debug("Summary query is {}".format(q))
-        summary = mysql.execute(q)
+        summary = q.all()
         res = []
         # Conversion to string is required as google docs cannot convert floats properly
         for row in summary:

@@ -2,6 +2,7 @@ import logging
 from multiprocessing import Lock
 
 import MySQLdb
+import psycopg2
 from decouple import config
 from jira.client import JIRA
 from sqlalchemy import create_engine
@@ -78,6 +79,21 @@ class DefaultSQLDataSource(DataSource):
         :return:
         """
         self._creator = func
+
+
+def postgres_creator():
+    """
+    Default Postgres connection creator for DefaultSQLDataSource
+    :return:
+    """
+    pg_user = config('PG_USER')
+    pg_pass = config('PG_PASS')
+    pg_host = config('PG_HOST')
+    pg_port = config('PG_PORT', cast=int, default=5432)
+    pg_db = config('PG_DB')
+
+    logger.info("Injecting Postgres connection {}@{}:{}/{}".format(pg_user, pg_host, pg_port, pg_db))
+    return psycopg2.connect(host=pg_host, database=pg_db, user=pg_user, password=pg_pass)
 
 
 def mysql_creator():

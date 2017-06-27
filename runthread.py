@@ -6,7 +6,7 @@ import time
 
 from decouple import config
 
-from datasources import SQLDataSource, mysql_creator
+from datasources import SQLDataSource, postgres_creator
 from payloads import JiraPayload, SugarPayload2, GooglePayload
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class RunThread(threading.Thread):
         while self.stopped.is_set():
             logger.info("Worker thread wake up call")
             attempts += 1
-            logger.info("Iteration #{} uptime: {} sec.".format(attempts, time.time() - uptime))
+            logger.info("===== Iteration #{} uptime: {} sec. =====".format(attempts, time.time() - uptime))
             if self.payloads:
                 for p in self.payloads:
                     start_time = time.time()
@@ -49,6 +49,7 @@ class RunThread(threading.Thread):
             else:
                 logger.info("Empty payload list, consider to stop this thread")
 
+            logger.info('===== Finished attempt #{} ====='.format(attempts))
             if self.stopped.is_set():
                 logger.info("Worker thread asleep for {} seconds".format(__INTERVAL__))
                 for _ in reversed(xrange(int(round(float(__INTERVAL__) / float(10))))):
@@ -59,7 +60,7 @@ class RunThread(threading.Thread):
 
 def init_logging():
     log_level = logging.DEBUG if config('DEBUG', cast=bool) else logging.INFO
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(level=log_level,
                         format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
                         datefmt="%H:%M:%S")
     if log_level == logging.DEBUG:
@@ -74,7 +75,8 @@ if __name__ == "__main__":
     stopFlag.set()
 
     # configure ORM with MySQL
-    SQLDataSource.set_creator(mysql_creator)
+    # SQLDataSource.set_creator(mysql_creator)
+    SQLDataSource.set_creator(postgres_creator)
 
     # Init all payloads
     payloads_init = []
@@ -82,13 +84,7 @@ if __name__ == "__main__":
         p = payload()
         payloads_init.append(p)
 
-    # sugar_payload = SugarPayload2()
-    # jira_payload = JiraPayload()
-    # google_payload = GooglePayload()
-
     thread = RunThread(stopFlag, payloads_init)
-    # thread = RunThread(stopFlag, [google_payload])
-    # thread = RunThread(stopFlag, [sugar_payload])
     thread.start()
 
 

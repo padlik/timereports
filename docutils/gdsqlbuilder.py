@@ -1,7 +1,12 @@
 #!/bin/env python
-import calendar as cal
-
+import datetime
 import logging
+
+from sqlalchemy import or_
+from sqlalchemy.sql import func, case
+
+from serializers import TimeSheet, User
+from utils import make_weeks_range
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +50,7 @@ class GDQueryBuilder(object):
         self._month = month
 
     def _build_query(self):
-        def make_calendar(year, month):
-            # just first days of weeks are required
-            z_trim = lambda x: [d for d in x if d != 0]
-            cal.setfirstweekday(cal.MONDAY)
-            weeks = cal.monthcalendar(year, month)
-            weeks[0] = z_trim(weeks[0])
-            weeks[-1] = z_trim(weeks[-1])
-            logger.debug("Calendar for month {}".format(str([(wd[0], wd[-1]) for wd in weeks])))
-            return [(wd[0], wd[-1]) for wd in weeks]
+        make_calendar = make_weeks_range
 
         def f_date(day):
             return "%s-%s-%s" % (self._year, self._month, day)
@@ -91,9 +88,101 @@ class GDQueryBuilder(object):
         return self._build_query()
 
 
+QT_SUGAR = 0
+QT_JIRA = 2
+QT_OVT = 3
+
+MAX_WEEKS = 6
+
+
+class GDORMQueryBuilder(object):
+    def __init__(self, db, year, month):
+        self._db = db
+        self._year = year
+        self._month = month
+
+    def _make_week_subq(self, date_range, query_type=QT_SUGAR):
+
+        stmt = self._db.query(TimeSheet.userid, func.sum(TimeSheet.time_spent).label('sumts')).filter(
+            TimeSheet.activity_date >= date_range[0], TimeSheet.activity_date <= date_range[1])
+
+        if query_type == QT_SUGAR:
+            stmt = stmt.filter(or_(TimeSheet.source != 'JIRA', TimeSheet.source.is_(None)))
+        if query_type == QT_JIRA:
+            stmt = stmt.filter(TimeSheet.source.isnot(None))
+        if query_type == QT_OVT:
+            stmt = stmt.filter(TimeSheet.description.ilike('%overtime%'))
+
+        stmt = stmt.group_by(TimeSheet.userid).subquery()
+
+        return stmt
+
+    def _make_query(self):
+        week_ranges = map(lambda t: (
+            datetime.datetime.strptime("{}-{}-{}".format(t[0], self._month, self._year), "%d-%m-%Y").date(),
+            datetime.datetime.strptime("{}-{}-{}".format(t[1], self._month, self._year), "%d-%m-%Y").date()),
+                          make_weeks_range(self._year, self._month))
+
+        month_range = (week_ranges[0][0], week_ranges[-1][-1])
+        if len(week_ranges) < 6:
+            week_ranges.append((week_ranges[0][1], week_ranges[0][0]))  # Deliberate false condition
+
+        weeks = [User.sugar_uname]
+        # typical 6 weeks
+        for week in week_ranges:
+            weeks.append(self._make_week_subq(week))
+        # overtime
+        weeks.append(self._make_week_subq(month_range, query_type=QT_OVT))
+        # jira
+        weeks.append(self._make_week_subq(month_range, query_type=QT_JIRA))
+
+        params = [User.sugar_uname]
+        # 1st param is sugar_uname and it's not from a subquery
+        for w in weeks[1:]:
+            params.append(case([(w.c.sumts.isnot(None), w.c.sumts)], else_=0))
+
+        # Query params has been build (select from)
+        qry = self._db.query(*params)
+
+        # Building joins (where)
+        for w in weeks[1:]:
+            qry = qry.outerjoin(w, User.id == w.c.userid)
+
+        qry = qry.filter(User.dissmissed == 'N').order_by(User.sugar_uname)
+        return qry
+
+    @property
+    def db(self):
+        return self._db
+
+    @db.setter
+    def db(self, db):
+        self._db = db
+
+    @property
+    def year(self):
+        return self._year
+
+    @property
+    def month(self):
+        return self._month
+
+    @year.setter
+    def year(self, y):
+        self._year = y
+
+    @month.setter
+    def month(self, m):
+        self._month = m
+
+    @property
+    def query(self):
+        return self._make_query()
+
+
 if __name__ == '__main__':
     report = GDQueryBuilder()
     # print report.cursor
-    report.year = 2015
-    report.month = 7
+    report.year = 2017
+    report.month = 5
     print report.query
