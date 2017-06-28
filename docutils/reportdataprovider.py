@@ -28,7 +28,7 @@ class ReportDataProvider(DataProvider):
         # Conversion to string is required as google docs cannot convert floats properly
         for row in summary:
             res.append(tuple(map(str, row)))
-        logger.debug("Rows returned {}".format(res))
+        logger.info("Rows returned {}".format(res))
         return res
 
     def get_range_value(self, key):
