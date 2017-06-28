@@ -29,7 +29,7 @@ class RunThread(threading.Thread):
 
     def run(self):
         logger.info("Entering running function")
-        attempts = 0
+        attempts = 0L
         uptime = time.time()
         while self.stopped.is_set():
             logger.info("Worker thread wake up call")
