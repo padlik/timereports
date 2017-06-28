@@ -69,7 +69,8 @@ class JiraPayload(object):
                                                       TimeSheet.activity_date <= dates[1], TimeSheet.source == 'JIRA')
             if exclude_users:
                 to_delete = to_delete.filter(~TimeSheet.userid.in_(exclude_users))
-                logger.warn("Users excluded: {}".format(exclude_users))
+                r_user_dict = {v: k for k, v in self.users.iteritems()}
+                logger.warn("Users excluded: {}".format(map(lambda u: r_user_dict[u], exclude_users)))
             to_delete.delete(synchronize_session='fetch')  # sync is required for complicated queries (IN is the case)
             mysql.flush()
 
