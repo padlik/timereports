@@ -24,7 +24,7 @@ Configuration can be done through `.env` file or enviroment variables
 - `PG_PASS` - Postgres password (string)
 - `PG_HOST` - Postgres host (string)
 - `PG_DB` - Postgres database (string)
-- `PG_PORT` - Postgres Port (int, default 3306)
+- `PG_PORT` - Postgres Port (int, default 5432)
 ###### SugarCRM specific:
 - `SUGAR_USER` - SugarCRM user name
 - `SUGAR_PASS` - SugarCRM path
