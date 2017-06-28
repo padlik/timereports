@@ -86,14 +86,19 @@ def postgres_creator():
     Default Postgres connection creator for DefaultSQLDataSource
     :return:
     """
-    pg_user = config('PG_USER')
-    pg_pass = config('PG_PASS')
-    pg_host = config('PG_HOST')
-    pg_port = config('PG_PORT', cast=int, default=5432)
-    pg_db = config('PG_DB')
 
-    logger.info("Injecting Postgres connection {}@{}:{}/{}".format(pg_user, pg_host, pg_port, pg_db))
-    return psycopg2.connect(host=pg_host, database=pg_db, user=pg_user, password=pg_pass)
+    # If we have database URL set then we do not need any other params
+    pg_url = config('DATABASE_URL', default=None)
+    if not pg_url:
+        pg_user = config('PG_USER')
+        pg_pass = config('PG_PASS')
+        pg_host = config('PG_HOST')
+        pg_port = config('PG_PORT', cast=int, default=5432)
+        pg_db = config('PG_DB')
+        logger.info("Injecting Postgres connection {}@{}:{}/{}".format(pg_user, pg_host, pg_port, pg_db))
+        return psycopg2.connect(host=pg_host, database=pg_db, user=pg_user, password=pg_pass)
+    else:
+        return psycopg2.connect(pg_url)
 
 
 def mysql_creator():
