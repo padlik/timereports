@@ -20,11 +20,11 @@ class GooglePayload(object):
         self.builder = ReportBuilder()
         self.report.template = TEMPLATE
         self.builder.template = self.report
-        self.builder.datasource = ReportDataProvider(self.year, self.month, (160, 160))
         logger.info("Init Google spreadsheet export month: {}={}".format(self.year, self.month))
 
     def payload(self):
         logger.info("Starting Google spreadsheet export for {}-{}".format(self.year, self.month))
+        self.builder.datasource = ReportDataProvider(self.year, self.month, (160, 160))
         with GDSpreadsheetProvider(self.sheet) as ssheet:
             self.builder.spreadsheet = ssheet
             self.builder.execute()
