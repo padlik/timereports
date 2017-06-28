@@ -127,25 +127,25 @@ class GDORMQueryBuilder(object):
         if len(week_ranges) < 6:
             week_ranges.append((week_ranges[0][1], week_ranges[0][0]))  # Deliberate false condition
 
-        weeks = [User.sugar_uname]
+        columns = [User.sugar_uname]
         # typical 6 weeks
         for week in week_ranges:
-            weeks.append(self._make_week_subq(week))
+            columns.append(self._make_week_subq(week))
         # overtime
-        weeks.append(self._make_week_subq(month_range, query_type=QT_OVT))
+        columns.append(self._make_week_subq(month_range, query_type=QT_OVT))
         # jira
-        weeks.append(self._make_week_subq(month_range, query_type=QT_JIRA))
+        columns.append(self._make_week_subq(month_range, query_type=QT_JIRA))
 
         params = [User.sugar_uname]
         # 1st param is sugar_uname and it's not from a subquery
-        for w in weeks[1:]:
+        for w in columns[1:]:
             params.append(case([(w.c.sumts.isnot(None), w.c.sumts)], else_=0))
 
         # Query params has been build (select from)
         qry = self._db.query(*params)
 
         # Building joins (where)
-        for w in weeks[1:]:
+        for w in columns[1:]:
             qry = qry.outerjoin(w, User.id == w.c.userid)
 
         qry = qry.filter(User.dissmissed == 'N').order_by(User.sugar_uname)
