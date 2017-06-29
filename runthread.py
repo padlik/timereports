@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 __INTERVAL__ = config('RUN_INTERVAL', default=300, cast=int)
 __PAYLOADS__ = [SugarPayload2, JiraPayload, GooglePayload]  # Payload order is important
+__VERSION__ = "1.3 Postgres; SQLAlchemy; Heroku"
 
 
 class RunThread(threading.Thread):
@@ -21,13 +22,14 @@ class RunThread(threading.Thread):
         if payloads is None:
             payloads = []
         logger.info("About to start working thread")
+        logger.info("==Application version: {}".format(__VERSION__))
         self.stopped = event
         self.payloads = payloads
         self._attempts = 0
 
     def run(self):
         logger.info("Entering running function")
-        attempts = 0
+        attempts = 0L
         uptime = time.time()
         while self.stopped.is_set():
             logger.info("Worker thread wake up call")
