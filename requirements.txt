@@ -1,11 +1,15 @@
+certifi==2017.4.17
+chardet==3.0.4
 defusedxml==0.5.0
 gdata==2.0.18
+idna==2.5
 iso8601==0.1.11
 jira==1.0.10
 MySQL-python==1.2.5
 oauthlib==1.0.3
 ordereddict==1.1
 pbr==3.0.1
+psycopg2==2.7.1
 python-decouple==3.0
 requests==2.9.1
 requests-oauthlib==0.6.1
@@ -13,3 +17,4 @@ requests-toolbelt==0.6.0
 six==1.10.0
 SQLAlchemy==1.1.11
 tlslite==0.4.9
+urllib3==1.21.1

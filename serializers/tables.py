@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Date, Float, Integer, String, Text, text
+from sqlalchemy import Column, Date, Float, Integer, String, Text, text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -19,7 +20,7 @@ class TimeSheet(Base):
     __tablename__ = 'timesheets'
 
     key = Column(Integer, primary_key=True)
-    userid = Column(Integer, nullable=False)
+    userid = Column(ForeignKey(u'users.id'), nullable=False, index=True)
     time_spent = Column(Float, nullable=False)
     description = Column(Text)
     activity_date = Column(Date, nullable=False, index=True)
@@ -27,6 +28,8 @@ class TimeSheet(Base):
     created_by = Column(String(60))
     name = Column(String(512))
     source = Column(String(10), index=True)
+
+    user = relationship(u'User',  back_populates="timesheets")
 
     def __repr__(self):
         return "Key: {}, UserId: {}, Time_Spent: {}, Description: {}, " \
@@ -42,13 +45,15 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
-    sugar_id = Column(String(40))
+    sugar_id = Column(String(40), index=True)
     sugar_uname = Column(String(45), nullable=False, unique=True)
-    intetics_uname = Column(String(45), unique=True)
+    intetics_uname = Column(String(45), unique=True, index=True)
     location = Column(String(1), server_default=text("'M'"))
-    dissmissed = Column(String(1), server_default=text("'N'"))
+    dissmissed = Column(String(1), server_default=text("'N'"), index=True)
     team = Column(String(45))
     full_name = Column(String(100))
+
+    timesheets = relationship("TimeSheet", order_by=TimeSheet.activity_date, back_populates='user')
 
     def __repr__(self):
         return "Id: {}, Sugar_Id: {}, Sugar_Uname: {}, Intetics_Uname: {}," \
@@ -56,3 +61,4 @@ class User(Base):
                                                                               self.intetics_uname, self.location,
                                                                               self.dissmissed, self.team,
                                                                               self.full_name)
+
