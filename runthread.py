@@ -7,13 +7,13 @@ import time
 from decouple import config
 
 from datasources import SQLDataSource, postgres_creator
-from payloads import JiraPayload, SugarPayload2, GooglePayload
+from payloads import SugarPayload, JiraPayload, GooglePayload
 
 logger = logging.getLogger(__name__)
 
 __INTERVAL__ = config('RUN_INTERVAL', default=300, cast=int)
-__PAYLOADS__ = [SugarPayload2, JiraPayload, GooglePayload]  # Payload order is important
-__VERSION__ = "1.3 Postgres; SQLAlchemy; Heroku"
+__PAYLOADS__ = [SugarPayload, JiraPayload, GooglePayload]  # Payload order is important
+__VERSION__ = "2.0 Postgres; SQLAlchemy; Heroku; Sugar Rest v11"
 
 
 class RunThread(threading.Thread):
@@ -44,7 +44,7 @@ class RunThread(threading.Thread):
                             p.payload()
                             logger.info("Payload finished in : {} seconds".format(time.time() - start_time))
                         except Exception as e:
-                            logger.warn('Exception in Payload {}:{}'.format(p, e.message))
+                            logger.warn('Exception in Payload {}:{}'.format(p, e))
                             logger.warn('Trying to continue to the next Payload')
                     else:
                         logger.info("Stop signal received. Stopping gracefully...")
@@ -65,8 +65,13 @@ def init_logging():
     logging.basicConfig(level=log_level,
                         format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
                         datefmt="%H:%M:%S")
+
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+
     if log_level == logging.DEBUG:
         logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+        logging.getLogger('urllib3').setLevel(logging.INFO)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from jira.client import JIRA
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from sugarutils import LiteSugarCRM
+from sugarutils import RestSugarCRM
 
 logger = logging.getLogger(__name__)
 
@@ -52,13 +52,17 @@ class DefaultJiraSource(DataSource):
         return JIRA(options=jira_opts, basic_auth=jira_auth)
 
 
-class DefaultSugarSource(DataSource):
+class RestSugarSource(DataSource):
     def init_instance(self):
-        sugar_user = config('SUGAR_USER')
-        sugar_pass = config('SUGAR_PASS')
         sugar_rest = config('SUGAR_REST')
-        logging.info("Configuring SugarCRM user=%s at REST=%s", sugar_user, sugar_rest)
-        return LiteSugarCRM(user=sugar_user, passwd=sugar_pass, rest=sugar_rest)
+        logger.info("Creating SugarCRM rest source at {}".format(sugar_rest))
+        sugar = RestSugarCRM(rest=sugar_rest)
+        logger.info("Checking connectivity")
+        sugar.connect(config('SUGAR_USER'), config('SUGAR_PASS'))
+        logger.info("Sugar connected")
+        logger.info("Ping -> {}".format(sugar.ping()))
+        logger.info("Logout -> {}".format(sugar.logout().success))
+        return sugar
 
 
 class DefaultSQLDataSource(DataSource):
@@ -120,5 +124,5 @@ def mysql_creator():
 
 
 JiraSource = DefaultJiraSource()
-SugarSource = DefaultSugarSource()
+SugarSource = RestSugarSource()
 SQLDataSource = DefaultSQLDataSource()
