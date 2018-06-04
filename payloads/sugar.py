@@ -1,6 +1,7 @@
 #!/bin/env python
 import logging
 from collections import defaultdict
+from multiprocessing.dummy import Pool
 
 from decouple import config
 from sqlalchemy import or_
@@ -19,6 +20,7 @@ class SugarPayloadRest(object):
     def __init__(self):
         self.year = config('REPO_YEAR', cast=int, default=2017)
         self.month = config('REPO_MONTH', cast=int, default=4)
+        self.threads = config('SUGAR_THREADS', cast=int, default=4)
         self.sugar = SugarSource.instance
         self.mysql = SQLDataSource.instance
 
@@ -36,7 +38,7 @@ class SugarPayloadRest(object):
             return response.records[0].id
         return ''
 
-    def get_timesheets(self, sugar_id):
+    def get_timesheets_worker(self, sugar_id):
         """
 
         :param sugar_id: Sugar User ID
@@ -60,6 +62,7 @@ class SugarPayloadRest(object):
                            rec.description,
                            rec.id,
                            rec.name))
+        logger.info("Finished worker for user: {} -> {} timesheets".format(sugar_id, len(ts)))
         return ts
 
     def check_users_sugarid(self, check_dismissed=False):
@@ -87,7 +90,7 @@ class SugarPayloadRest(object):
     def process_timesheets(self):
         """
         Re
-        :return:
+        :return: Sum of all timesheets imported
         """
 
         try:
@@ -103,14 +106,13 @@ class SugarPayloadRest(object):
             user_dict = {u.sugar_id: u for u in active_users}
             logger.debug("Active users are {}".format(user_dict))
             logger.info("Querying SugarCRM... ")
-            ts_list = []
-            for sugar_id in user_dict.keys():
-                logger.info("Querying timesheets for {} ".format(user_dict[sugar_id].sugar_uname))
-                ts = self.get_timesheets(sugar_id)
-                logger.info("User: {} -> {} timesheets".format(user_dict[sugar_id].sugar_uname, len(ts)))
-                if ts:
-                    ts_list.append(ts)
-            logger.info("Done querying")
+            logger.info("Sugar max threads is set to: {}".format(self.threads))
+            pool = Pool(self.threads)
+            logger.info("Spreading threads")
+            ts_list = pool.map(self.get_timesheets_worker, user_dict.keys())
+            pool.close()
+            pool.join()
+            logger.info("All threads are finished. Preparing summary")
             summary = defaultdict(float)
             for entries in ts_list:
                 for entry in entries:
@@ -133,9 +135,12 @@ class SugarPayloadRest(object):
     def payload(self):
         self.year = config('REPO_YEAR', cast=int, default=2017)
         self.month = config('REPO_MONTH', cast=int, default=4)
+        self.threads = config('SUGAR_THREADS', cast=int, default=4)
         logger.info("Re-connecting Sugar...")
         self.sugar.connect(config('SUGAR_USER'), config('SUGAR_PASS'))
         logger.info('Connected. Ping instance -> {}'.format(self.sugar.ping()))
+        logger.info("Checking for users with empty id...")
+        self.check_users_sugarid()
         logger.info("About to fetch timesheets for {}-{}".format(self.year, self.month))
         overall_hrs = self.process_timesheets()
         logger.info("=== Total Hrs for {}-{} = {}".format(self.year, self.month, overall_hrs))

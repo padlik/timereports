@@ -12,7 +12,7 @@ from payloads import SugarPayload, JiraPayload, GooglePayload
 logger = logging.getLogger(__name__)
 
 __INTERVAL__ = config('RUN_INTERVAL', default=300, cast=int)
-__PAYLOADS__ = [SugarPayload, JiraPayload, GooglePayload]  # Payload order is important
+__PAYLOADS__ = [SugarPayload, JiraPayload,GooglePayload]  # Payload order is important
 __VERSION__ = "2.0 Postgres; SQLAlchemy; Heroku; Sugar Rest v11"
 
 
