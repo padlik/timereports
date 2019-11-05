@@ -1,8 +1,9 @@
 #!/bin/env python
 import logging
 
-from docutils import ReportTemplate, ReportBuilder, TEMPLATE, GDSpreadsheetProvider, ReportDataProvider
 from decouple import config
+
+from docutils import ReportTemplate, ReportBuilder, TEMPLATE, GDSpreadsheetProvider, ReportDataProvider
 
 logger = logging.getLogger(__name__)
 

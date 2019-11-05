@@ -29,7 +29,7 @@ class TimeSheet(Base):
     name = Column(String(512))
     source = Column(String(10), index=True)
 
-    user = relationship(u'User',  back_populates="timesheets")
+    user = relationship(u'User', back_populates="timesheets")
 
     def __repr__(self):
         return "Key: {}, UserId: {}, Time_Spent: {}, Description: {}, " \
@@ -61,4 +61,3 @@ class User(Base):
                                                                               self.intetics_uname, self.location,
                                                                               self.dissmissed, self.team,
                                                                               self.full_name)
-
