@@ -30,12 +30,14 @@ class SugarPayloadRest(object):
         :param sugar_uname: Sugar user_name (without email)
         :return: sugar user id
         """
-
+        logger.info("Querying sugar_id for {}".format(sugar_uname))
         query_str = {"filter": "[{\"user_name\": \"%s\"}]" % sugar_uname}
         logger.debug("Query string for {} is {}".format(sugar_uname, query_str))
         response = self.sugar.get(self.USERID, params=query_str)
         if 'records' in response._fields:
+            logger.info("Got sugar_id for {} -> {}".format(sugar_uname, response.records[0].id))
             return response.records[0].id
+        logger.warn("No sugar_id for {}".format(sugar_uname))
         return ''
 
     def get_timesheets_worker(self, sugar_id):
@@ -108,7 +110,7 @@ class SugarPayloadRest(object):
             logger.info("Querying SugarCRM... ")
             logger.info("Sugar max threads is set to: {}".format(self.threads))
             pool = Pool(self.threads)
-            logger.info("Spreading threads")
+            logger.info("Spreading threads...")
             ts_list = pool.map(self.get_timesheets_worker, user_dict.keys())
             pool.close()
             pool.join()
@@ -141,6 +143,7 @@ class SugarPayloadRest(object):
         logger.info('Connected. Ping instance -> {}'.format(self.sugar.ping()))
         logger.info("Checking for users with empty id...")
         self.check_users_sugarid()
+        logger.info("Done checking for empty users")
         logger.info("About to fetch timesheets for {}-{}".format(self.year, self.month))
         overall_hrs = self.process_timesheets()
         logger.info("=== Total Hrs for {}-{} = {}".format(self.year, self.month, overall_hrs))

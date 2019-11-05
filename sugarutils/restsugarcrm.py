@@ -18,16 +18,32 @@ class RestSugarCRM(object):
 
     @staticmethod
     def _json_object_hook(d):
+        """
+
+        :param d: Json from a REST service
+        :return: namedtupe object
+        """
         return namedtuple('SugarJson', d.keys(), rename=True)(*d.values())
 
     @staticmethod
     def _check_response(response):
+        """
+
+        :param response: HTTP response object
+        :return: json converted to a namedtuple or Exception
+        """
         if response.status_code == 200:
             return json.loads(response.text, object_hook=RestSugarCRM._json_object_hook)
         else:
             raise Exception('Failed to execute {} on {}'.format(response.url, response.status_code))
 
     def connect(self, user, passwd):
+        """
+
+        :param user: Sugar userId
+        :param passwd: Sugar REST service password
+        :return: None
+        """
         logger.info("Connecting to {}".format(self._rest))
         payload = {'grant_type': 'password',
                    'username': user,
@@ -44,23 +60,31 @@ class RestSugarCRM(object):
         logger.debug("Access token is: {}".format(x.access_token))
 
     def logout(self):
+        """
+        Logout from SugarCRM. Required to avoid conflicts when new Access token is obtained.
+        :return: Ignore (or request result)
+        """
         logger.info("Logging out from {}".format(self._rest))
         x = None
         try:
             x = RestSugarCRM._check_response(requests.post(self._rest + self.LOGOUT, data=None, headers=self._headers))
         except Exception as e:
-            logger.warn('Exception on logout from Sugar'.format(e))
-            logger.info("Ignoring exceptions on logout")
+            logger.warn("Exception on logout from Sugar".format(e))
+            logger.warn("Ignoring exceptions on logout")
         finally:
             if 'OAuth-Token' in self._headers:
                 del self._headers['OAuth-Token']
-            return x
+        return x
 
     def ping(self):
+        """
+        Ping service for SugarCRM REST
+        :return: 'pong' string if success
+        """
         return self.get(self.PING)
 
-    def get(self, url, params=None):
-        u = self._rest + url
+    def get(self, endpoint, params=None):
+        u = self._rest + endpoint
         return RestSugarCRM._check_response(requests.get(u, params=params, headers=self._headers))
 
     def __init__(self, rest=None):
@@ -75,24 +99,4 @@ if __name__ == "__main__":
     r = RestSugarCRM()
     r.connect(config('SUGAR_USER'), config('SUGAR_PASS'))
     print "There should be pong -> {}".format(r.ping())
-    filter = "[{\"assigned_user_id\": \"%s\"}," \
-             "{\"activity_date\": {\"$gte\":\"%s\"}},{\"activity_date\": {\"$lte\":\"%s\"}}]"
-    from utils import make_month_range
-
-    dates = make_month_range(2018, 5)
-    print dates[0].strftime("%Y-%m-%d"), dates[1].strftime("%Y-%m-%d")
-    q = filter % ('64dbcf2a-d883-8f19-ac2c-55fa2d795db4', dates[0].strftime("%Y-%m-%d"), dates[1].strftime("%Y-%m-%d"))
-    querystring = {"filter": q, "max_num": "100"}
-    x = r.get("ps_Timesheets/filter", params=querystring)
-    print x._fields
-    if 'records' in x._fields:
-        for rec in x.records:
-            print "==="
-            print rec.created_by
-            print rec.activity_date
-            print rec.time_spent
-            print rec.description
-            print rec.id
-            print rec.name
-            print "======"
     print "There should be true -> {}".format(r.logout().success)
