@@ -20,7 +20,7 @@ class TimeSheet(Base):
     __tablename__ = 'timesheets'
 
     key = Column(Integer, primary_key=True)
-    userid = Column(ForeignKey(u'users.id'), nullable=False, index=True)
+    userid = Column(ForeignKey('users.id'), nullable=False, index=True)
     time_spent = Column(Float, nullable=False)
     description = Column(Text)
     activity_date = Column(Date, nullable=False, index=True)
@@ -29,7 +29,7 @@ class TimeSheet(Base):
     name = Column(String(512))
     source = Column(String(10), index=True)
 
-    user = relationship(u'User', back_populates="timesheets")
+    user = relationship('User', back_populates="timesheets")
 
     def __repr__(self):
         return "Key: {}, UserId: {}, Time_Spent: {}, Description: {}, " \

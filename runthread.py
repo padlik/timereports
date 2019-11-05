@@ -6,8 +6,8 @@ import time
 
 from decouple import config
 
-from datasources import SQLDataSource, postgres_creator
-from payloads import SugarPayload, JiraPayload, GooglePayload
+from .datasources import SQLDataSource, postgres_creator
+from .payloads import SugarPayload, JiraPayload, GooglePayload
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class RunThread(threading.Thread):
 
     def run(self):
         logger.info("Entering running function")
-        attempts = 0L
+        attempts = 0
         uptime = time.time()
         while self.stopped.is_set():
             logger.info("Worker thread wake up call")
@@ -54,7 +54,7 @@ class RunThread(threading.Thread):
             logger.info('===== Finished attempt #{} ====='.format(attempts))
             if self.stopped.is_set():
                 logger.info("Worker thread asleep for {} seconds".format(__INTERVAL__))
-                for _ in reversed(xrange(int(round(float(__INTERVAL__) / float(10))))):
+                for _ in reversed(range(int(round(float(__INTERVAL__) / float(10))))):
                     time.sleep(10)
                     if not self.stopped.is_set():
                         break

@@ -118,10 +118,10 @@ class GDORMQueryBuilder(object):
         return stmt
 
     def _make_query(self):
-        week_ranges = map(lambda t: (
+        week_ranges = [(
             datetime.datetime.strptime("{}-{}-{}".format(t[0], self._month, self._year), "%d-%m-%Y").date(),
-            datetime.datetime.strptime("{}-{}-{}".format(t[1], self._month, self._year), "%d-%m-%Y").date()),
-                          make_weeks_range(self._year, self._month))
+            datetime.datetime.strptime("{}-{}-{}".format(t[1], self._month, self._year), "%d-%m-%Y").date()) for t in
+            make_weeks_range(self._year, self._month)]
 
         month_range = (week_ranges[0][0], week_ranges[-1][-1])
         if len(week_ranges) < 6:
@@ -185,4 +185,4 @@ if __name__ == '__main__':
     # print report.cursor
     report.year = 2017
     report.month = 5
-    print report.query
+    print((report.query))

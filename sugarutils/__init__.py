@@ -1,1 +1,1 @@
-from restsugarcrm import RestSugarCRM
+from .restsugarcrm import RestSugarCRM

@@ -4,8 +4,8 @@ import datetime
 import logging
 
 from datasources import SQLDataSource
-from gdreport import DataProvider
-from gdsqlbuilder import GDORMQueryBuilder
+from .gdreport import DataProvider
+from .gdsqlbuilder import GDORMQueryBuilder
 
 logger = logging.getLogger(__name__)
 
