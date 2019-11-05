@@ -7,7 +7,7 @@ import gdata.gauth
 import gdata.spreadsheets.client
 import gdata.spreadsheets.data
 
-from xlutils import range_dimension
+from .xlutils import range_dimension
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class GSpreadSheetError(Exception):
 
 def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
     """Converts an integer to a base36 string."""
-    if not isinstance(number, (int, long)):
+    if not isinstance(number, int):
         raise TypeError('number must be an integer')
 
     base36 = ''
@@ -117,9 +117,9 @@ class GSpreadSheet(object):
         cells = self._client.GetCells(self._worksheet_id, self._s_magic, q=query)
         dim = range_dimension(srange)
         items = iter(cells.entry)
-        for row in xrange(dim[1]):
-            for col in xrange(dim[0]):
-                item = items.next()
+        for row in range(dim[1]):
+            for col in range(dim[0]):
+                item = next(items)
                 try:
                     item.cell.input_value = matrix[row][col]
                 except IndexError:

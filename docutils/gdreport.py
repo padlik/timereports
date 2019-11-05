@@ -2,10 +2,10 @@
 
 import collections
 
-import xlutils
-from xlutils import abc2col
-from xlutils import cell2tuple
-from xlutils import col2abc
+from . import xlutils
+from .xlutils import abc2col
+from .xlutils import cell2tuple
+from .xlutils import col2abc
 
 TEMPLATE = {'update_date': {'type': 'cell', 'range': 'H1'}, 'update_time': {'type': 'cell', 'range': 'H2'},
             'hour_report': {'type': 'range', 'range': 'A4:I70'}}
@@ -68,7 +68,7 @@ class ReportTemplate(collections.MutableMapping):
                 result = ":".join([head, tail])
             return result
 
-        def next(self):
+        def __next__(self):
             new_range = self
             if self.dynamic == 'rows':
                 new_range = ReportTemplate.Range(self._name, self._next_row(self._range), **{'dynamic': self._dynamic})
@@ -108,7 +108,7 @@ class ReportTemplate(collections.MutableMapping):
         return self.Range(name, kwargs.get('range'), **kwargs)
 
     def _parse_template(self):
-        for name, value in self._template.iteritems():
+        for name, value in list(self._template.items()):
             self._report[name] = self._generators[self.__validate_type(value.get('type'))](name, **value)
 
     @property
@@ -124,7 +124,7 @@ class ReportTemplate(collections.MutableMapping):
         return self._report[item]
 
     def __iter__(self):
-        for key in self._report.keys():
+        for key in list(self._report.keys()):
             yield key
 
     def __len__(self):
@@ -168,7 +168,7 @@ class ReportBuilder(object):
         self._tt = template
 
     def execute(self):
-        for name, value in self._tt.iteritems():
+        for name, value in list(self._tt.items()):
             if isinstance(value, ReportTemplate.Range):
                 self._process_range(value)
             else:
@@ -182,7 +182,7 @@ class ReportBuilder(object):
             r = xlrange
             for v in self._dp.get_range_value(xlrange.name):
                 self._ss.set_range(r.range, v)
-                r = r.next()
+                r = next(r)
         else:
             self._ss.set_range(xlrange.range, self._dp.get_range_value(xlrange.name))
 

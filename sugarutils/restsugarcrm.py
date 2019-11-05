@@ -18,7 +18,7 @@ class RestSugarCRM(object):
 
     @staticmethod
     def _json_object_hook(d):
-        return namedtuple('SugarJson', d.keys(), rename=True)(*d.values())
+        return namedtuple('SugarJson', list(d.keys()), rename=True)(*list(d.values()))
 
     @staticmethod
     def _check_response(response):
@@ -49,7 +49,7 @@ class RestSugarCRM(object):
         try:
             x = RestSugarCRM._check_response(requests.post(self._rest + self.LOGOUT, data=None, headers=self._headers))
         except Exception as e:
-            logger.warn('Exception on logout from Sugar'.format(e))
+            logger.warning('Exception on logout from Sugar'.format(e))
             logger.info("Ignoring exceptions on logout")
         finally:
             if 'OAuth-Token' in self._headers:
@@ -71,28 +71,28 @@ class RestSugarCRM(object):
 
 
 if __name__ == "__main__":
-    print "Checking RestSugarCRM"
+    print("Checking RestSugarCRM")
     r = RestSugarCRM()
     r.connect(config('SUGAR_USER'), config('SUGAR_PASS'))
-    print "There should be pong -> {}".format(r.ping())
+    print(("There should be pong -> {}".format(r.ping())))
     filter = "[{\"assigned_user_id\": \"%s\"}," \
              "{\"activity_date\": {\"$gte\":\"%s\"}},{\"activity_date\": {\"$lte\":\"%s\"}}]"
     from utils import make_month_range
 
     dates = make_month_range(2018, 5)
-    print dates[0].strftime("%Y-%m-%d"), dates[1].strftime("%Y-%m-%d")
+    print((dates[0].strftime("%Y-%m-%d"), dates[1].strftime("%Y-%m-%d")))
     q = filter % ('64dbcf2a-d883-8f19-ac2c-55fa2d795db4', dates[0].strftime("%Y-%m-%d"), dates[1].strftime("%Y-%m-%d"))
     querystring = {"filter": q, "max_num": "100"}
     x = r.get("ps_Timesheets/filter", params=querystring)
-    print x._fields
+    print((x._fields))
     if 'records' in x._fields:
         for rec in x.records:
-            print "==="
-            print rec.created_by
-            print rec.activity_date
-            print rec.time_spent
-            print rec.description
-            print rec.id
-            print rec.name
-            print "======"
-    print "There should be true -> {}".format(r.logout().success)
+            print("===")
+            print((rec.created_by))
+            print((rec.activity_date))
+            print((rec.time_spent))
+            print((rec.description))
+            print((rec.id))
+            print((rec.name))
+            print("======")
+    print(("There should be true -> {}".format(r.logout().success)))

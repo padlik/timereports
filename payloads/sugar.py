@@ -109,7 +109,7 @@ class SugarPayloadRest(object):
             logger.info("Sugar max threads is set to: {}".format(self.threads))
             pool = Pool(self.threads)
             logger.info("Spreading threads")
-            ts_list = pool.map(self.get_timesheets_worker, user_dict.keys())
+            ts_list = pool.map(self.get_timesheets_worker, list(user_dict.keys()))
             pool.close()
             pool.join()
             logger.info("All threads are finished. Preparing summary")
@@ -125,7 +125,7 @@ class SugarPayloadRest(object):
             self.mysql.commit()
             logger.info("Commit completed")
             logger.info("=== Timesheets summary Year: {} Month: {}  === ".format(self.year, self.month))
-            for k, v in summary.iteritems():
+            for k, v in summary.items():
                 logger.info("{}: {} hrs".format(k, v))
             return sum(summary.values())
         finally:

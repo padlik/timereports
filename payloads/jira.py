@@ -69,8 +69,8 @@ class JiraPayload(object):
                                                       TimeSheet.activity_date <= dates[1], TimeSheet.source == 'JIRA')
             if exclude_users:
                 to_delete = to_delete.filter(~TimeSheet.userid.in_(exclude_users))
-                r_user_dict = {v: k for k, v in self.users.iteritems()}
-                logger.warn("Users excluded: {}".format(map(lambda u: r_user_dict[u], exclude_users)))
+                r_user_dict = {v: k for k, v in self.users.items()}
+                logger.warn("Users excluded: {}".format([r_user_dict[u] for u in exclude_users]))
             to_delete.delete(synchronize_session='fetch')  # sync is required for complicated queries (IN is the case)
             mysql.flush()
 
@@ -78,7 +78,7 @@ class JiraPayload(object):
             logger.info('Preparing for insert {} sheets'.format(len(ts)))
 
             fields = ['userid', 'id', 'description', 'time_spent', 'activity_date', 'source']
-            bulk_ts = map(lambda lst: {fields[n]: v for n, v in enumerate(lst)}, ts)
+            bulk_ts = [{fields[n]: v for n, v in enumerate(lst)} for lst in ts]
             logger.debug("Bulk update package {}".format(bulk_ts))
             mysql.execute(TimeSheet.__table__.insert(), bulk_ts)
             mysql.commit()
@@ -116,7 +116,7 @@ class JiraPayload(object):
         ex_users = []
         overall = 0.0
         for r in results:
-            for u, ts in r.iteritems():
+            for u, ts in r.items():
                 sum_ts = sum([t[2] for t in ts])
                 overall += sum_ts
                 if not ts:

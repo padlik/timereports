@@ -1,9 +1,9 @@
 #!/bin/env python#
 
-import xlutils
+from . import xlutils
 from datasources import SQLDataSource
-from gdreport import SpreadsheetProvider
-from gdspreadsheet import GSpreadSheet
+from .gdreport import SpreadsheetProvider
+from .gdspreadsheet import GSpreadSheet
 from serializers import OAuthData
 
 

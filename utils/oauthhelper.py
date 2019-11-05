@@ -20,8 +20,8 @@ def refresh_tokens(params):
     """
     token = gdata.gauth.OAuth2Token(client_id=params['client_id'], client_secret=params['client_sec'], scope=SCOPE,
                                     user_agent='paul.app')
-    print 'Verification URL: %s' % token.generate_authorize_url()
-    code = raw_input('Paste verification code from URL above:').strip()
+    print(('Verification URL: %s' % token.generate_authorize_url()))
+    code = input('Paste verification code from URL above:').strip()
     token.get_access_token(code)
     params['client_at'] = token.access_token
     params['client_rt'] = token.refresh_token
@@ -46,7 +46,7 @@ def set_oauth_params(data):
     """
     logger.info("About to set data {}".format(data))
     mysql = SQLDataSource.instance
-    for param, value in params.iteritems():
+    for param, value in list(params.items()):
         row = OAuthData(param=param, value=value)
         mysql.merge(row)
     mysql.commit()

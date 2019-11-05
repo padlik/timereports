@@ -29,7 +29,7 @@ class RunThread(threading.Thread):
 
     def run(self):
         logger.info("Entering running function")
-        attempts = 0L
+        attempts = 0
         uptime = time.time()
         while self.stopped.is_set():
             logger.info("Worker thread wake up call")
@@ -44,8 +44,8 @@ class RunThread(threading.Thread):
                             p.payload()
                             logger.info("Payload finished in : {} seconds".format(time.time() - start_time))
                         except Exception as e:
-                            logger.warn('Exception in Payload {}:{}'.format(p, e))
-                            logger.warn('Trying to continue to the next Payload')
+                            logger.warning('Exception in Payload {}:{}'.format(p, e))
+                            logger.warning('Trying to continue to the next Payload')
                     else:
                         logger.info("Stop signal received. Stopping gracefully...")
             else:
@@ -54,7 +54,7 @@ class RunThread(threading.Thread):
             logger.info('===== Finished attempt #{} ====='.format(attempts))
             if self.stopped.is_set():
                 logger.info("Worker thread asleep for {} seconds".format(__INTERVAL__))
-                for _ in reversed(xrange(int(round(float(__INTERVAL__) / float(10))))):
+                for _ in reversed(range(int(round(float(__INTERVAL__) / float(10))))):
                     time.sleep(10)
                     if not self.stopped.is_set():
                         break
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
 
     def sigterm_handler(signum, _):
-        logger.warn("SIGTERM caught ({}), stopping...".format(signum))
+        logger.warning("SIGTERM caught ({}), stopping...".format(signum))
         stopFlag.clear()
         raise KeyboardInterrupt
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         while 1:
             time.sleep(.1)
     except KeyboardInterrupt:
-        logger.warn("Keyboard Interrupt: Gracefully stopping. Please wait...")
+        logger.warning("Keyboard Interrupt: Gracefully stopping. Please wait...")
         stopFlag.clear()
         thread.join()
         sys.exit(0)

@@ -1,1 +1,1 @@
-from tables import Base, OAuthData, User, TimeSheet
+from .tables import Base, OAuthData, User, TimeSheet
