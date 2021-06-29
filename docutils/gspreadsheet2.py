@@ -23,4 +23,3 @@ class GSpreadSheet2(object):
 
     def flush(self):
         pass
-
