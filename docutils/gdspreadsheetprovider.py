@@ -3,7 +3,7 @@
 from . import xlutils
 from datasources import SQLDataSource
 from .gdreport import SpreadsheetProvider
-from .gdspreadsheet import GSpreadSheet
+from .gspreadsheet2 import GSpreadSheet2
 from serializers import OAuthData
 
 
@@ -15,7 +15,7 @@ class GDSpreadsheetProvider(SpreadsheetProvider):
     def __init_provider(ssid):
         mysql = SQLDataSource.instance
         params = {o.param: o.value for o in mysql.query(OAuthData.param, OAuthData.value).all()}
-        return GSpreadSheet(ssid, params)
+        return GSpreadSheet2(ssid, params)
 
     def set_cell(self, cell_range, value):
         tm = xlutils.cell2tuple(cell_range)

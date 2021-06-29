@@ -10,7 +10,7 @@ class OAuthData(Base):
     __tablename__ = 'oauthdata'
 
     param = Column(String(50), primary_key=True, unique=True)
-    value = Column(String(255))
+    value = Column(String(4096))
 
     def __repr__(self):
         return "Key: {} Value: {} ".format(self.param, self.value)
