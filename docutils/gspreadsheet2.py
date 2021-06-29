@@ -24,11 +24,3 @@ class GSpreadSheet2(object):
     def flush(self):
         pass
 
-
-if __name__ == "__main__":
-    SQLDataSource.set_creator(postgres_creator)
-    mysql = SQLDataSource.instance
-    params = {o.param: o.value for o in mysql.query(OAuthData.param, OAuthData.value).all()}
-    gs = GSpreadSheet2("0Av6KMa_AP8_sdDdMMFgzb2V2V0laamdqa0N2WFc0R1E", params)
-    print(gs.sheet.acell('B1').value)
-    gs.set_acell("E1", "TEST!")
