@@ -2,9 +2,6 @@
 
 import gspread
 
-from datasources import SQLDataSource, postgres_creator
-from serializers import OAuthData
-
 
 class GSpreadSheet2(object):
     def __init__(self, worksheet_id, oauth2params, sheet=0):

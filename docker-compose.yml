@@ -12,13 +12,19 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: repo
       PGPASSWORD: postgres
+      REPO_YEAR: 2021
+      REPO_MONTH: 6
 
   postgres:
     image: postgres
     ports:
       - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: repo
 
+volumes:
+  db-data:
