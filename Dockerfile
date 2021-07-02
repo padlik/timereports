@@ -1,10 +1,11 @@
-FROM  python:3.7-alpine
+FROM  python:3.7
 
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
 
-RUN apk add --update bash python3-dev postgresql-client postgresql-dev build-base mariadb-connector-c-dev libxml2 libxml2-dev libxslt libxslt-dev
+RUN  apt-get update && apt-get install -y postgresql-client \
+     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false
 
 RUN pip install --no-cache-dir -r requirements.txt
 

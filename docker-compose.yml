@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3'
 
 services:
   timereports:
@@ -8,10 +8,7 @@ services:
     command:
       - /usr/src/app/run.sh
     environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_DB: repo
-      PGPASSWORD: postgres
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/repo"
       REPO_YEAR: 2021
       REPO_MONTH: 6
 
@@ -21,10 +18,22 @@ services:
       - 5432:5432
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./repo.pgsql:/docker-entrypoint-initdb.d/repo.sql
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: repo
 
+  pgadmin4:
+    image: dpage/pgadmin4
+    ports:
+      - 5000:80
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+
 volumes:
   db-data:
+  pgadmin-data:
